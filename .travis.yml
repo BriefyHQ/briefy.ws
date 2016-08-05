@@ -1,0 +1,22 @@
+language: python
+python: 3.5
+sudo: false
+branches:
+  only:
+  - master
+  - develop
+services:
+- docker
+env:
+  matrix:
+  - TOXENV=py35
+install:
+- pip install -r requirements/dev.txt
+- pip install flake8
+script:
+- tox -e ${TOXENV}
+- flake8 src/briefy/ws setup.py
+after_success:
+- make docs
+notifications:
+  slack: robyandjack:qxjOPwcrGEtVx3aCQBr812t9

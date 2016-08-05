@@ -1,0 +1,13 @@
+-r prod.txt
+Jinja2==2.8
+Sphinx==1.4.4
+alabaster==0.7.7
+coverage==4.1
+pyramid-debugtoolbar==2.4.2
+pytest==2.9.2
+pytz==2015.7
+snowballstemmer==1.2.1
+sphinx-bootstrap-theme==0.4.8
+sphinx-rtd-theme==0.1.9
+tox==2.3.1
+WebTest==2.0.20

@@ -1,0 +1,1 @@
+"""Error views briefy.ws."""
