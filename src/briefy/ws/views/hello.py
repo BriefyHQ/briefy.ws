@@ -30,5 +30,4 @@ def get_hello(request):
     if Authenticated in request.effective_principals:
         data['user'] = request.get_user_info()
 
-
     return data

@@ -1,5 +1,5 @@
 """Briefy microservices helper."""
-from .initialization import initialize
+from .initialization import initialize  # noqa
 from pyramid.renderers import JSONP
 
 import os
@@ -23,7 +23,6 @@ def expandvars_dict(settings):
 
 def includeme(config):
     """Configuration to be included by other services."""
-    settings = config.get_settings()
 
     # add default renderer
     config.add_renderer('jsonp', JSONP(param_name='callback'))
@@ -36,4 +35,3 @@ def includeme(config):
 
     # Scan views.
     config.scan("briefy.ws.views")
-

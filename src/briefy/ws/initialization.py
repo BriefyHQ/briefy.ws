@@ -9,8 +9,8 @@ def initialize(config, version=None, project_name='', default_settings=None):
 
     :param config: Pyramid configuration
     :type config: ~pyramid:pyramid.config.Configurator
-    :param str version: Current project version (e.g. '0.0.1') if not defined in application settings.
-    :param str project_name: Project name if not defined in application settings.
+    :param str version: Current project version (e.g. '0.0.1') if not defined in app settings.
+    :param str project_name: Project name if not defined in app settings.
     :param dict default_settings: Override briefy.ws default settings values.
     """
     settings = config.get_settings()
