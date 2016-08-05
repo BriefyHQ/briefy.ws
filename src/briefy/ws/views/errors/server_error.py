@@ -3,7 +3,6 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 import json
-import pyramid.httpexceptions as http_exc
 
 
 @view_config(context=Exception)
