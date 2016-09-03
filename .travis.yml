@@ -19,4 +19,4 @@ script:
 after_success:
 - make docs
 notifications:
-  slack: robyandjack:qxjOPwcrGEtVx3aCQBr812t9
+  slack: briefy:qxjOPwcrGEtVx3aCQBr812t9
