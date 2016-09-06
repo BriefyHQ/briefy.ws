@@ -29,6 +29,7 @@ success = Service(
     description="Simplest app"
 )
 
+
 @success.get()
 def get_info(request):
     """Returns Hello in JSON."""

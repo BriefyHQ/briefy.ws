@@ -1,5 +1,6 @@
 """Test devops views."""
 
+
 def test_lb_heartbeat(testapp):
     """Test loadbalancer heartbeat view."""
     app = testapp

@@ -70,9 +70,9 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 lint: ## check style with flake8
-	flake8 src/briefy/common tests setup.py
+	flake8 src/briefy/ws tests setup.py
 
-test: ## run tests quickly with the default Python
+test: lint ## run tests quickly with the default Python
 	py.test
 	
 

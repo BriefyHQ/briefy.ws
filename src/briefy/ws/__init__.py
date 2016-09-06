@@ -13,6 +13,7 @@ CORS_POLICY = {
 
 logger = logging.getLogger(__name__)
 
+
 def expandvars_dict(settings):
     """Expand all environment variables in a settings dictionary.
 

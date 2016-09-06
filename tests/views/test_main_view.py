@@ -1,5 +1,6 @@
 """Test main view and routes."""
 
+
 def test_hello(testapp):
     """Test main view for this service."""
     app = testapp
