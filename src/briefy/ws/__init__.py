@@ -3,6 +3,7 @@ from .initialization import initialize  # noqa
 from pyramid.renderers import JSONP
 
 import os
+import logging
 
 
 CORS_POLICY = {
@@ -10,6 +11,7 @@ CORS_POLICY = {
     'headers': ('X-Locale', )
 }
 
+logger = logging.getLogger(__name__)
 
 def expandvars_dict(settings):
     """Expand all environment variables in a settings dictionary.
