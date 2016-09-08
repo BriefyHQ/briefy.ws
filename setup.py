@@ -20,8 +20,7 @@ requires = [
     'requests',
     'setuptools',
     'waitress',
-    'wheel',
-    'zope.configuration',
+    'wheel'
 ]
 
 test_requirements = [
