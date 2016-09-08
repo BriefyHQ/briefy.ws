@@ -1,19 +1,20 @@
-from pyramid.renderers import JSONP
-from pyramid.renderers import JSONP_VALID_CALLBACK
+"""Custom JSONRenderer"""
 from briefy.common.utils.transformers import to_serializable
 from pyramid.interfaces import IJSONAdapter
-from zope.interface import providedBy
-
-
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.renderers import JSONP
+from pyramid.renderers import JSONP_VALID_CALLBACK
+from zope.interface import providedBy
 
 
 _marker = object()
 
 
 class JSONRenderer(JSONP):
+    """JSON renderer that inject to_serializable as default for json or simplejson dumps call."""
 
     def _make_default(self, request):
+        """This function is not used anymore, just here to explicit it."""
         def default(obj):
             if hasattr(obj, '__json__'):
                 return obj.__json__(request)
@@ -34,6 +35,7 @@ class JSONRenderer(JSONP):
 
         def _render(value, system):
             request = system.get('request')
+            # TODO: verify if this should be changed
             # default = self._make_default(request)
             val = self.serializer(value, default=to_serializable, **self.kw)
             ct = 'application/json'
