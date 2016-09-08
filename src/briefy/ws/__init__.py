@@ -1,6 +1,6 @@
 """Briefy microservices helper."""
 from .initialization import initialize  # noqa
-from pyramid.renderers import JSONP
+# from .renderer import JSONRenderer
 
 import os
 import logging
@@ -27,11 +27,14 @@ def expandvars_dict(settings):
 def includeme(config):
     """Configuration to be included by other services."""
 
-    # add default renderer
-    config.add_renderer('jsonp', JSONP(param_name='callback'))
+    config.include('pyramid_zcml')
+    config.load_zcml('configure.zcml')
 
     # Setup cornice.
     config.include("cornice")
+
+    # add default renderer
+    # config.add_renderer('json', JSONRenderer(param_name='callback'))
 
     # Per-request transaction.
     config.include("pyramid_tm")

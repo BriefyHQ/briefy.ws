@@ -11,15 +11,18 @@ with open(os.path.join(here, 'HISTORY.rst')) as f:
     CHANGES = f.read()
 
 requires = [
+    'briefy.common',
     'colander',
     'cornice',
     'prettyconf',
     'pyramid',
     'pyramid_tm',
+    'pyramid_zcml',
     'requests',
     'setuptools',
     'waitress',
-    'wheel'
+    'wheel',
+    'zope.configuration',
 ]
 
 test_requirements = [
