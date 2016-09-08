@@ -17,7 +17,6 @@ requires = [
     'prettyconf',
     'pyramid',
     'pyramid_tm',
-    'pyramid_zcml',
     'requests',
     'setuptools',
     'waitress',

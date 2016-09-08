@@ -56,4 +56,3 @@ class JSONRenderer(JSONP):
 
         return _render
 
-renderer_utility = JSONRenderer('json')
