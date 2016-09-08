@@ -55,4 +55,3 @@ class JSONRenderer(JSONP):
             return body
 
         return _render
-
