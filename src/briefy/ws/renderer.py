@@ -36,7 +36,7 @@ class JSONRenderer(JSON):
                 ct = response.content_type
                 if ct == response.default_content_type:
                     response.content_type = 'application/json'
-            # do not user _make_default, just pass to_serializable
+            # do not use _make_default, just pass to_serializable
             return self.serializer(value, default=to_serializable, **self.kw)
 
         return _render
