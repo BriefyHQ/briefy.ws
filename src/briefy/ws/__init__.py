@@ -31,7 +31,7 @@ def includeme(config):
     config.include("cornice")
 
     # add default renderer
-    config.add_renderer('json', JSONRenderer(param_name='callback'))
+    config.add_renderer('json', JSONRenderer())
 
     # Per-request transaction.
     config.include("pyramid_tm")

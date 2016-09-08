@@ -1,16 +1,14 @@
 """Custom JSONRenderer"""
 from briefy.common.utils.transformers import to_serializable
 from pyramid.interfaces import IJSONAdapter
-from pyramid.httpexceptions import HTTPBadRequest
-from pyramid.renderers import JSONP
-from pyramid.renderers import JSONP_VALID_CALLBACK
+from pyramid.renderers import JSON
 from zope.interface import providedBy
 
 
 _marker = object()
 
 
-class JSONRenderer(JSONP):
+class JSONRenderer(JSON):
     """JSON renderer that inject to_serializable as default for json or simplejson dumps call."""
 
     def _make_default(self, request):
@@ -28,30 +26,17 @@ class JSONRenderer(JSONP):
         return default
 
     def __call__(self, info):
-        """ Returns JSONP-encoded string with content-type
-        ``application/javascript`` if query parameter matching
-        ``self.param_name`` is present in request.GET; otherwise returns
-        plain-JSON encoded string with content-type ``application/json``"""
-
+        """ Returns a plain JSON-encoded string with content-type
+        ``application/json``. The content-type may be overridden by
+        setting ``request.response.content_type``."""
         def _render(value, system):
             request = system.get('request')
-            # TODO: verify if this should be changed
-            # default = self._make_default(request)
-            val = self.serializer(value, default=to_serializable, **self.kw)
-            ct = 'application/json'
-            body = val
             if request is not None:
-                callback = request.GET.get(self.param_name)
-
-                if callback is not None:
-                    if not JSONP_VALID_CALLBACK.match(callback):
-                        raise HTTPBadRequest('Invalid JSONP callback function name.')
-
-                    ct = 'application/javascript'
-                    body = '/**/{0}({1});'.format(callback, val)
                 response = request.response
-                if response.content_type == response.default_content_type:
-                    response.content_type = ct
-            return body
+                ct = response.content_type
+                if ct == response.default_content_type:
+                    response.content_type = 'application/json'
+            # do not user _make_default, just pass to_serializable
+            return self.serializer(value, default=to_serializable, **self.kw)
 
         return _render
