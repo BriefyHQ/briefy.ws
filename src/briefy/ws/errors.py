@@ -4,7 +4,7 @@
 class ValidationError(Exception):
     """Validation error."""
 
-    def __init__(self, message:str, location:str, name:str):
+    def __init__(self, message: str, location: str, name: str):
         """Initialize a ValidationError.
 
         :param message: Error message.
