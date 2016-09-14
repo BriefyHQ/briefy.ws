@@ -2,6 +2,12 @@
 History
 =======
 
+1.0.0 (Unreleased)
+------------------
+
+* Add RESTService base class for REST resources. (ericof)
+
+
 0.1.0 (Unreleased)
 ------------------
 
