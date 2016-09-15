@@ -17,6 +17,7 @@ class RESTService:
     friendly_name = ''
     default_order_by = 'updated_at'
     default_order_direction = 1
+    default_excludes = ['created_at', 'updated_at', 'state_history', 'state']
 
     def __init__(self, request):
         """Initialize the service."""
@@ -53,8 +54,10 @@ class RESTService:
     @property
     def schema_write(self):
         """Schema for write operations."""
+        colander_config = self.model.__colanderalchemy_config__
+        excludes = colander_config.get('excludes', self.default_excludes)
         return SQLAlchemySchemaNode(
-            self.model, unknown='ignore', excludes=['created_at', 'updated_at']
+            self.model, unknown='ignore', excludes=excludes
         )
 
     @property
