@@ -80,7 +80,7 @@ class TestSortingFromQueryParams:
         with pytest.raises(ValidationError) as excinfo:
             func(query_params=query_params, allowed_fields=self.allowed_fields)
 
-        assert  """Unknown sort field 'foobar'""" in str(excinfo.value.message)
+        assert """Unknown sort field 'foobar'""" in str(excinfo.value.message)
 
     def test_multiple_fields_one_invalid_field(self):
         """Passing id, name and foobar, an invalid field."""
@@ -90,7 +90,7 @@ class TestSortingFromQueryParams:
         with pytest.raises(ValidationError) as excinfo:
             func(query_params=query_params, allowed_fields=self.allowed_fields)
 
-        assert  """Unknown sort field 'foobar'""" in str(excinfo.value.message)
+        assert """Unknown sort field 'foobar'""" in str(excinfo.value.message)
 
 
 class TestFilterFromQueryParams:
@@ -141,18 +141,6 @@ class TestFilterFromQueryParams:
         assert result[0].operator.value == 'in_'
         assert '360' in result[0].value
         assert 'wedding' in result[0].value
-
-    def test_one_field_exclude(self):
-        """Passing id, value '360'."""
-        query_params = {'exclude_id': '360'}
-        func = filter.create_filter_from_query_params
-        result = func(query_params=query_params, allowed_fields=self.allowed_fields)
-
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert result[0].field == 'id'
-        assert result[0].operator.value == 'notin_'
-        assert '360' in result[0].value
 
     def test_one_field_exclude(self):
         """Passing id, value '360'."""

@@ -4,10 +4,12 @@ from briefy.ws.utils import filter
 from colanderalchemy import SQLAlchemySchemaNode
 from cornice.schemas import CorniceSchema
 from cornice.util import json_error
+from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 
 
 import sqlalchemy as sa
+import uuid
 
 
 class RESTService:
@@ -19,9 +21,40 @@ class RESTService:
     default_order_direction = 1
     default_excludes = ['created_at', 'updated_at', 'state_history', 'state']
 
+    validators = {
+        'GET': ['validate_id'],
+        'PUT': ['validate_id']
+    }
+
+    def validate_id(self, request):
+        """Validate id in matchdict is UUID valid.
+
+        :param request: pyramid request.
+        :return:
+        """
+        try:
+            uuid.UUID(request.matchdict.get('id'))
+        except ValueError as e:
+            request.errors.add('path', 'id',
+                               'The id informed is not 16 byte uuid valid.')
+
     def __init__(self, request):
         """Initialize the service."""
         self.request = request
+
+    def _run_validators(self, request):
+        """Run all validators for the current http method.
+
+        :param request: request object
+        """
+        validators = self.validators.get(self.request.method, [])
+        for item in validators:
+            try:
+                validator = getattr(self, item)
+            except AttributeError as e:
+                raise AttributeError('Validator "{name}" specified not found.'.format(name=item))
+            else:
+                validator(request)
 
     def raise_invalid(self, location='body', name=None, description=None, **kwargs):
         """Raise a 400 error.
@@ -132,6 +165,7 @@ class RESTService:
             'data': records
         }
 
+    @view(validators='_run_validators')
     def collection_post(self):
         """Add a new instance.
 
@@ -159,12 +193,14 @@ class RESTService:
             'data': collection,
         }
 
+    @view(validators='_run_validators')
     def get(self):
         """Get an instance of the model object."""
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
         return obj
 
+    @view(validators='_run_validators')
     def put(self):
         """Update an existing object."""
         id = self.request.matchdict.get('id', '')
