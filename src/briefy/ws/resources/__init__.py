@@ -237,6 +237,13 @@ class RESTService:
         return obj
 
     @view(validators='_run_validators')
+    def collection_head(self):
+        """Return the header with total objects for this request."""
+        headers = self.request.response.headers
+        records = self.get_records()
+        headers['Total-Records'] = '{total}'.format(total=records['total'])
+
+    @view(validators='_run_validators')
     def collection_get(self):
         """Return a list of objects.
 
