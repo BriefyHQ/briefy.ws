@@ -1,4 +1,5 @@
 """Base Resources for briefy.ws."""
+from briefy.ws.auth import validate_jwt_token
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from colanderalchemy import SQLAlchemySchemaNode
@@ -69,6 +70,9 @@ class RESTService:
 
         :param request: request object
         """
+        # first #ForaTemer, second always validate jwt token on request.
+        validate_jwt_token(request)
+
         validators = self.validators.get(self.request.method, [])
         for item in validators:
             try:
@@ -228,6 +232,7 @@ class RESTService:
         session.flush()
         return obj
 
+    @view(validators='_run_validators')
     def collection_get(self):
         """Return a list of objects.
 
