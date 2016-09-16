@@ -104,7 +104,10 @@ class RESTService:
         """List of fields allowed in filtering and sorting.
         """
         schema = self.schema_filter
-        return [child.name for child in schema.children]
+        allowed_fields = [child.name for child in schema.children]
+        # Allow filtering by state
+        allowed_fields.append('state')
+        return allowed_fields
 
     @property
     def schema_read(self):
