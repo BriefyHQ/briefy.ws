@@ -7,7 +7,7 @@ from cornice.util import json_error
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 
-
+import colander
 import sqlalchemy as sa
 import uuid
 
@@ -21,10 +21,32 @@ class RESTService:
     default_order_direction = 1
     default_excludes = ['created_at', 'updated_at', 'state_history', 'state']
 
-    validators = {
-        'GET': ['validate_id'],
-        'PUT': ['validate_id']
-    }
+    _required_fields = (
+        ('PUT', tuple()),
+    )
+
+    def get_required_fields(self, method: str) -> tuple:
+        """Get required fields for a method.
+
+        :param method: HTTP verb to filter fields for.
+        :return: tuple with required fields.
+        """
+        mapping = dict(self._required_fields)
+        return mapping.get(method, tuple())
+
+    _validators = (
+        ('GET', ('validate_id', )),
+        ('PUT', ('validate_id', ))
+    )
+
+    @property
+    def validators(self) -> dict:
+        """Return mapping of validators.
+
+        :return: Dictionary containing validators per HTTP verb.
+        """
+        mapping = dict(self._validators)
+        return mapping
 
     def validate_id(self, request):
         """Validate id in matchdict is UUID valid.
@@ -106,7 +128,13 @@ class RESTService:
     @property
     def schema_put(self):
         """Return the schema for PUT requests."""
-        return self.schema_write
+        schema = self.schema_write
+        required_fields = self.get_required_fields('PUT')
+        for child in schema.children:
+            if child.title not in required_fields:
+                child.missing = colander.drop
+                child.default = colander.null
+        return schema
 
     @property
     def schema(self):
