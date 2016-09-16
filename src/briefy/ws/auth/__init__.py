@@ -23,4 +23,4 @@ def validate_jwt_token(request):
     fields = ['locale', 'fullname', 'first_name', 'last_name', 'email']
     user = {key: request.jwt_claims[key] for key in fields}
     user['id'] = user_id
-    request.validated['user'] = user
+    request.user = user
