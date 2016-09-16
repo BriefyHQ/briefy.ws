@@ -73,7 +73,7 @@ lint: ## check style with flake8
 	flake8 src/briefy/ws tests setup.py
 
 test: lint ## run tests quickly with the default Python
-	py.test
+	py.test --cov-report term-missing --cov=briefy.ws tests
 	
 
 test-all: ## run tests on every Python version with tox
