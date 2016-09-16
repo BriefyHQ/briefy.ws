@@ -153,6 +153,26 @@ class RESTService:
         """Return a session object from the request."""
         return self.request.registry['db_session_factory']()
 
+    @property
+    def default_filters(self) -> tuple:
+        """Default filters to be applied to every query.
+
+        This is supposed to be specialized by resource classes.
+        :returns: A tuple of default filters to be applied to queries.
+        """
+        return tuple()
+
+    def _get_base_query(self):
+        """Return the base query for this service.
+
+        :return: Query object with default filter already applie.
+        """
+        model = self.model
+        query = model.query()
+        for filter_ in self.default_filters:
+            query = query.filter(filter_)
+        return query
+
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
 
@@ -160,7 +180,9 @@ class RESTService:
         :return: Category
         """
         model = self.model
-        obj = model.get(id)
+        query = self._get_base_query()
+        obj = query.filter(model.id == id).first()
+
         if not obj:
             raise NotFound(
                 '{friendly_name} with id: {id} not found.'.format(
@@ -176,8 +198,7 @@ class RESTService:
         :return: dict
         """
         query_params = self.request.GET
-        model = self.model
-        query = model.query()
+        query = self._get_base_query()
 
         # Apply filters
         query = self.filter_query(query, query_params)
