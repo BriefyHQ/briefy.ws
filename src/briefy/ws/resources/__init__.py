@@ -104,7 +104,10 @@ class RESTService:
         """List of fields allowed in filtering and sorting.
         """
         schema = self.schema_filter
-        return [child.name for child in schema.children]
+        allowed_fields = [child.name for child in schema.children]
+        # Allow filtering by state
+        allowed_fields.append('state')
+        return allowed_fields
 
     @property
     def schema_read(self):
@@ -232,6 +235,13 @@ class RESTService:
         session.add(obj)
         session.flush()
         return obj
+
+    @view(validators='_run_validators')
+    def collection_head(self):
+        """Return the header with total objects for this request."""
+        headers = self.request.response.headers
+        records = self.get_records()
+        headers['Total-Records'] = '{total}'.format(total=records['total'])
 
     @view(validators='_run_validators')
     def collection_get(self):
