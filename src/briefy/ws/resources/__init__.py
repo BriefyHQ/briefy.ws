@@ -1,4 +1,5 @@
 """Base Resources for briefy.ws."""
+from briefy.ws.errors import ValidationError
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from colanderalchemy import SQLAlchemySchemaNode
@@ -261,10 +262,19 @@ class RESTService:
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
         model = self.model
-        raw_filters = filter.create_filter_from_query_params(
-            query_params,
-            self.filter_allowed_fields
-        )
+        try:
+            raw_filters = filter.create_filter_from_query_params(
+                query_params,
+                self.filter_allowed_fields
+            )
+        except ValidationError as e:
+            error_details = {
+                'location': e.location,
+                'description': e.message,
+                'name': e.name
+            }
+            self.raise_invalid(**error_details)
+
         for raw_filter in raw_filters:
             key = raw_filter.field
             value = raw_filter.value
@@ -292,12 +302,21 @@ class RESTService:
     def sort_query(self, query, query_params=None):
         """Apply request sorting to a query."""
         model = self.model
-        raw_sorting = filter.create_sorting_from_query_params(
-            query_params,
-            self.filter_allowed_fields,
-            self.default_order_by,
-            self.default_order_direction
-        )
+        try:
+            raw_sorting = filter.create_sorting_from_query_params(
+                query_params,
+                self.filter_allowed_fields,
+                self.default_order_by,
+                self.default_order_direction
+            )
+        except ValidationError as e:
+            error_details = {
+                'location': e.location,
+                'description': e.message,
+                'name': e.name
+            }
+            self.raise_invalid(**error_details)
+
         for sorting in raw_sorting:
             key = sorting.field
             direction = sorting.direction
