@@ -17,6 +17,7 @@ requires = [
     'cornice',
     'prettyconf',
     'pyramid',
+    'pyramid_jwt',
     'pyramid_tm',
     'requests',
     'setuptools',
