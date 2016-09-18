@@ -22,8 +22,9 @@ class BaseResource:
     default_order_by = 'updated_at'
     default_order_direction = 1
 
-    def __init__(self, request):
+    def __init__(self, context, request):
         """Initialize the service."""
+        self.context = context
         self.request = request
 
     @property
