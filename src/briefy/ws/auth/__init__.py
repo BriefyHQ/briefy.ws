@@ -6,6 +6,17 @@ from webob import Response
 import json
 
 
+class AuthenticatedUser:
+    """Class to represent current authenticated user.
+    """
+    _fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
+
+    def __init__(self, request):
+        self.id = request.authenticated_userid
+        for field in self._fields:
+            setattr(self, field, request.jwt_claims[field])
+
+
 class HTTPUnauthorized(BaseHTTPUnauthorized):
     """401 Unauthorized HTTP exception."""
     def __init__(self, msg='Unauthorized'):
@@ -21,11 +32,7 @@ def user_factory(request):
     :param request:
     :return: user map from jwt claims
     """
-    user_id = request.authenticated_userid
-    fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
-    user = {key: request.jwt_claims[key] for key in fields}
-    user['id'] = user_id
-    return user
+    return AuthenticatedUser(request)
 
 
 def validate_jwt_token(request):
