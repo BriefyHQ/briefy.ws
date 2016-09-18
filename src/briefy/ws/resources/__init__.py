@@ -14,18 +14,59 @@ import sqlalchemy as sa
 import uuid
 
 
-class RESTService:
-    """Rest service based on a model."""
+class BaseResource:
+    """Base class for resources."""
 
     model = None
     friendly_name = ''
     default_order_by = 'updated_at'
     default_order_direction = 1
-    default_excludes = ['created_at', 'updated_at', 'state_history', 'state']
 
-    _required_fields = (
-        ('PUT', tuple()),
-    )
+    def __init__(self, request):
+        """Initialize the service."""
+        self.request = request
+
+    @property
+    def session(self):
+        """Return a session object from the request."""
+        return self.request.registry['db_session_factory']()
+
+    @property
+    def schema_read(self):
+        """Schema for read operations."""
+        return data.NullSchema(unknown='ignore')
+
+    @property
+    def schema(self):
+        """Returns the schema to validate this resource."""
+        method = self.request.method
+        colander_schema = getattr(
+            self,
+            'schema_{method}'.format(method=method.lower()),
+            self.schema_read
+        )
+        schema = CorniceSchema.from_colander(colander_schema)
+        return schema
+
+    @property
+    def default_filters(self) -> tuple:
+        """Default filters to be applied to every query.
+
+        This is supposed to be specialized by resource classes.
+        :returns: A tuple of default filters to be applied to queries.
+        """
+        return tuple()
+
+    def _get_base_query(self):
+        """Return the base query for this service.
+
+        :return: Query object with default filter already applie.
+        """
+        model = self.model
+        query = model.query()
+        for filter_ in self.default_filters:
+            query = query.filter(filter_)
+        return query
 
     def get_required_fields(self, method: str) -> tuple:
         """Get required fields for a method.
@@ -40,6 +81,21 @@ class RESTService:
         ('GET', ('validate_id', )),
         ('PUT', ('validate_id', ))
     )
+
+    @property
+    def schema_filter(self):
+        """Schema for filtering and ordering operations."""
+        return SQLAlchemySchemaNode(self.model, unknown='ignore')
+
+    @property
+    def filter_allowed_fields(self):
+        """List of fields allowed in filtering and sorting.
+        """
+        schema = self.schema_filter
+        allowed_fields = [child.name for child in schema.children]
+        # Allow filtering by state
+        allowed_fields.append('state')
+        return allowed_fields
 
     @property
     def validators(self) -> dict:
@@ -65,10 +121,6 @@ class RESTService:
         except ValueError as e:
             request.errors.add('path', 'id',
                                'The id informed is not 16 byte uuid valid.')
-
-    def __init__(self, request):
-        """Initialize the service."""
-        self.request = request
 
     def _run_validators(self, request):
         """Run all validators for the current http method.
@@ -97,93 +149,6 @@ class RESTService:
         request = self.request
         request.errors.add(location, name, description, **kwargs)
         raise json_error(request.errors)
-
-    @property
-    def schema_filter(self):
-        """Schema for filtering and ordering operations."""
-        return SQLAlchemySchemaNode(self.model, unknown='ignore')
-
-    @property
-    def filter_allowed_fields(self):
-        """List of fields allowed in filtering and sorting.
-        """
-        schema = self.schema_filter
-        allowed_fields = [child.name for child in schema.children]
-        # Allow filtering by state
-        allowed_fields.append('state')
-        return allowed_fields
-
-    @property
-    def schema_read(self):
-        """Schema for read operations."""
-        return data.NullSchema(unknown='ignore')
-
-    @property
-    def schema_write(self):
-        """Schema for write operations."""
-        colander_config = self.model.__colanderalchemy_config__
-        excludes = colander_config.get('excludes', self.default_excludes)
-        return SQLAlchemySchemaNode(
-            self.model, unknown='ignore', excludes=excludes
-        )
-
-    @property
-    def schema_get(self):
-        """Return the schema for GET requests."""
-        return self.schema_read
-
-    @property
-    def schema_post(self):
-        """Return the schema for POST requests."""
-        return self.schema_write
-
-    @property
-    def schema_put(self):
-        """Return the schema for PUT requests."""
-        schema = self.schema_write
-        required_fields = self.get_required_fields('PUT')
-        for child in schema.children:
-            if child.title not in required_fields:
-                child.missing = colander.drop
-                child.default = colander.null
-        return schema
-
-    @property
-    def schema(self):
-        """Returns the schema to validate this resource."""
-        method = self.request.method
-        colander_schema = getattr(
-            self,
-            'schema_{method}'.format(method=method.lower()),
-            self.schema_read
-        )
-        schema = CorniceSchema.from_colander(colander_schema)
-        return schema
-
-    @property
-    def session(self):
-        """Return a session object from the request."""
-        return self.request.registry['db_session_factory']()
-
-    @property
-    def default_filters(self) -> tuple:
-        """Default filters to be applied to every query.
-
-        This is supposed to be specialized by resource classes.
-        :returns: A tuple of default filters to be applied to queries.
-        """
-        return tuple()
-
-    def _get_base_query(self):
-        """Return the base query for this service.
-
-        :return: Query object with default filter already applie.
-        """
-        model = self.model
-        query = model.query()
-        for filter_ in self.default_filters:
-            query = query.filter(filter_)
-        return query
 
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
@@ -225,58 +190,6 @@ class RESTService:
             'total': total,
             'data': records
         }
-
-    @view(validators='_run_validators')
-    def collection_post(self):
-        """Add a new instance.
-
-        :returns: Newly created instance
-        """
-        payload = self.request.validated
-        session = self.session
-        model = self.model
-        obj = model(**payload)
-        session.add(obj)
-        session.flush()
-        return obj
-
-    @view(validators='_run_validators')
-    def collection_head(self):
-        """Return the header with total objects for this request."""
-        headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
-
-    @view(validators='_run_validators')
-    def collection_get(self):
-        """Return a list of objects.
-
-        :returns: Payload with total records and list of objects
-        """
-        headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
-        collection = records['data']
-        return {
-            'total': records['total'],
-            'data': collection,
-        }
-
-    @view(validators='_run_validators')
-    def get(self):
-        """Get an instance of the model object."""
-        id = self.request.matchdict.get('id', '')
-        obj = self.get_one(id)
-        return obj
-
-    @view(validators='_run_validators')
-    def put(self):
-        """Update an existing object."""
-        id = self.request.matchdict.get('id', '')
-        obj = self.get_one(id)
-        obj.update(self.request.validated)
-        self.session.flush()
-        return obj
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
@@ -345,3 +258,155 @@ class RESTService:
                 func = sa.desc
             query = query.order_by(func(column))
         return query
+
+
+class RESTService(BaseResource):
+    """Rest service based on a model."""
+
+    default_excludes = ['created_at', 'updated_at', 'state_history', 'state']
+
+    _required_fields = (
+        ('PUT', tuple()),
+    )
+
+    @property
+    def schema_write(self):
+        """Schema for write operations."""
+        colander_config = self.model.__colanderalchemy_config__
+        excludes = colander_config.get('excludes', self.default_excludes)
+        return SQLAlchemySchemaNode(
+            self.model, unknown='ignore', excludes=excludes
+        )
+
+    @property
+    def schema_get(self):
+        """Return the schema for GET requests."""
+        return self.schema_read
+
+    @property
+    def schema_post(self):
+        """Return the schema for POST requests."""
+        return self.schema_write
+
+    @property
+    def schema_put(self):
+        """Return the schema for PUT requests."""
+        schema = self.schema_write
+        required_fields = self.get_required_fields('PUT')
+        for child in schema.children:
+            if child.title not in required_fields:
+                child.missing = colander.drop
+                child.default = colander.null
+        return schema
+
+    @view(validators='_run_validators')
+    def collection_post(self):
+        """Add a new instance.
+
+        :returns: Newly created instance
+        """
+        payload = self.request.validated
+        session = self.session
+        model = self.model
+        obj = model(**payload)
+        session.add(obj)
+        session.flush()
+        return obj
+
+    @view(validators='_run_validators')
+    def collection_head(self):
+        """Return the header with total objects for this request."""
+        headers = self.request.response.headers
+        records = self.get_records()
+        headers['Total-Records'] = '{total}'.format(total=records['total'])
+
+    @view(validators='_run_validators')
+    def collection_get(self):
+        """Return a list of objects.
+
+        :returns: Payload with total records and list of objects
+        """
+        headers = self.request.response.headers
+        records = self.get_records()
+        headers['Total-Records'] = '{total}'.format(total=records['total'])
+        collection = records['data']
+        return {
+            'total': records['total'],
+            'data': collection,
+        }
+
+    @view(validators='_run_validators')
+    def get(self):
+        """Get an instance of the model object."""
+        id = self.request.matchdict.get('id', '')
+        obj = self.get_one(id)
+        return obj
+
+    @view(validators='_run_validators')
+    def put(self):
+        """Update an existing object."""
+        id = self.request.matchdict.get('id', '')
+        obj = self.get_one(id)
+        obj.update(self.request.validated)
+        self.session.flush()
+        return obj
+
+
+class WorkflowAwareResource(BaseResource):
+    """Workflow aware resource."""
+
+    @property
+    def workflow(self):
+        """Return workflow for the model."""
+        id = self.request.matchdict.get('id', '')
+        obj = self.get_one(id)
+        context = self.request.user
+        workflow = getattr(obj, 'workflow', None)
+        if workflow:
+            workflow.context = context
+            return workflow
+
+    @property
+    def schema_write(self):
+        """Schema for write operations."""
+        return data.WorkflowTransitionSchema(unknown='ignore')
+
+    @view(validators='_run_validators')
+    def collection_post(self):
+        """Add a new instance.
+
+        :returns: Newly created instance
+        """
+        transition = self.request.validated['transition']
+        message = self.request.validated['message']
+
+        workflow = self.workflow
+        if transition not in workflow.transitions:
+            self.raise_invalid(
+                location='body',
+                name='transition_id',
+                description='Invalid transition: {id}'.format(id=transition)
+            )
+        # Execute transition
+        workflow.transitions[transition](message=message)
+
+        response = {
+            'status': True,
+            'message': 'Executed transition: {id}'.format(id=transition)
+        }
+        return response
+
+    @view(validators='_run_validators')
+    def collection_get(self):
+        """Return the list of available transitions for this user in this object."""
+        response = {
+            'transitions': [],
+            'total': 0
+        }
+        workflow = self.workflow
+        if workflow:
+            transitions = workflow.transitions
+            transitions_ids = list(transitions)
+            response['transitions'] = transitions_ids
+            response['total'] = len(transitions_ids)
+        return response
