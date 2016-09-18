@@ -22,7 +22,7 @@ def login(request, testapp):
     assert 'application/json' == response.content_type
 
     result = response.json
-    for item in 'message', 'provider', 'user', 'status', 'token':
+    for item in ['message', 'provider', 'user', 'status', 'token']:
         assert item in result.keys()
 
     cls = request.cls

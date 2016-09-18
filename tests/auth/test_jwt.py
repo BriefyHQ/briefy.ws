@@ -21,7 +21,7 @@ class TestSecureResource:
         result = response.json
         assert 'user' in result.keys()
 
-        for field in ['locale', 'fullname', 'first_name', 'last_name', 'email', 'id']:
+        for field in ['locale', 'fullname', 'first_name', 'last_name', 'email', 'id', 'groups']:
             assert result['user'].get(field) is not None
 
     def test_get_protected_failure(self):

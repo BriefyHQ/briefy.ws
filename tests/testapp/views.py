@@ -54,7 +54,8 @@ def login_view(request):
         "fullname": "Person Lastname",
         "first_name": "Person",
         "email": "person@gmail.com",
-        "last_name": "Lastname"
+        "last_name": "Lastname",
+        "groups": ["g:briefy_pms", "g:briefy_qa"]
     }
     token = request.create_jwt_token(user.get('id'), **user)
     result = dict(token=token,
@@ -70,5 +71,5 @@ def get_protected(request):
     """Returns protected information when the user is authenticated."""
     return {'status': 'success',
             'message': 'Protected information.',
-            'user': request.validated.get('user'),
+            'user': request.user,
             }

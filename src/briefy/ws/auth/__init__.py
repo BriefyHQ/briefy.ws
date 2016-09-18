@@ -20,7 +20,7 @@ def validate_jwt_token(request):
     user_id = request.authenticated_userid
     if user_id is None:
         raise HTTPUnauthorized
-    fields = ['locale', 'fullname', 'first_name', 'last_name', 'email']
+    fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
     user = {key: request.jwt_claims[key] for key in fields}
     user['id'] = user_id
     request.user = user
