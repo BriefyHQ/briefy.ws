@@ -12,9 +12,17 @@ class AuthenticatedUser:
     _fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
 
     def __init__(self, request):
+        """Initialize object from JWT token using pyramid jwt claims."""
         self.id = request.authenticated_userid
         for field in self._fields:
             setattr(self, field, request.jwt_claims[field])
+
+    def to_dict(self):
+        """Create a dict representation of current user.
+
+        :return: dict serializable user data
+        """
+        return {field: getattr(self, field, None) for field in self._fields}
 
 
 class HTTPUnauthorized(BaseHTTPUnauthorized):
