@@ -58,6 +58,6 @@ class BaseFactory(object):
             if context:
                 permissions = list(context.workflow.permissions())
                 user_id = self.request.authenticated_userid
-                if user_id:
+                if user_id and permissions:
                     result.append((Allow, user_id, permissions))
         return result
