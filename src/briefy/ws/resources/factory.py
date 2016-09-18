@@ -62,5 +62,5 @@ class BaseFactory(object):
                 wf.context = user
                 permissions = list(wf.permissions())
                 if permissions:
-                    result.append((Allow, user['id'], permissions))
+                    result.append((Allow, user.id, permissions))
         return result
