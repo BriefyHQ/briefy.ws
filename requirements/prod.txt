@@ -1,2 +1,2 @@
--e git+git@github.com:BriefyHQ/briefy.common.git@master#egg=briefy.common
+-e git+git@github.com:BriefyHQ/briefy.common.git@develop#egg=briefy.common
 -e .
