@@ -13,9 +13,11 @@ with open(os.path.join(here, 'HISTORY.rst')) as f:
 requires = [
     'briefy.common',
     'colander',
+    'colanderalchemy',
     'cornice',
     'prettyconf',
     'pyramid',
+    'pyramid_jwt',
     'pyramid_tm',
     'requests',
     'setuptools',
@@ -36,8 +38,8 @@ setup(
     classifiers=[
         "Programming Language :: Python",
     ],
-    author='Erico Andrei',
-    author_email='erico@picsastock.com',
+    author='Briefy Developers',
+    author_email='developers@briefy.co',
     url='https://github.com/BriefyHQ/briefy.ws',
     keywords='microservice briefy',
     packages=find_packages('src'),

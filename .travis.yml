@@ -8,6 +8,8 @@ branches:
 services:
 - docker
 env:
+  global:
+  - JWT_SECRET=e68d4ffb-d621-4d17-a33e-00183e9553e1 JWT_EXPIRATION=84600
   matrix:
   - TOXENV=py35
 install:

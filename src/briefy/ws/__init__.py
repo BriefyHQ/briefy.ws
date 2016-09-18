@@ -1,6 +1,9 @@
 """Briefy microservices helper."""
 from .initialization import initialize  # noqa
 from .renderer import JSONRenderer
+from briefy.ws.config import JWT_EXPIRATION
+from briefy.ws.config import JWT_SECRET
+from pyramid.authorization import ACLAuthorizationPolicy
 
 import os
 import logging
@@ -36,5 +39,10 @@ def includeme(config):
     # Per-request transaction.
     config.include("pyramid_tm")
 
+    # config jwt
+    config.set_authorization_policy(ACLAuthorizationPolicy())
+    config.include('pyramid_jwt')
+    config.set_jwt_authentication_policy(private_key=JWT_SECRET,
+                                         expiration=int(JWT_EXPIRATION))
     # Scan views.
     config.scan("briefy.ws.views")
