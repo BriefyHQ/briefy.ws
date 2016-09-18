@@ -52,12 +52,15 @@ class BaseFactory(object):
         :rtype: list
         """
         result = []
-        if self.model:
-            context_id = self.request.matchdict.get('id')
-            context = self.model.get(context_id)
+        context_id = self.request.matchdict.get('id')
+        model = self.model
+        user = self.request.user
+        if model and user and context_id:
+            context = model.get(context_id)
             if context:
-                permissions = list(context.workflow.permissions())
-                user_id = self.request.authenticated_userid
-                if user_id and permissions:
-                    result.append((Allow, user_id, permissions))
+                wf = context.workflow
+                wf.context = user
+                permissions = list(wf.permissions())
+                if permissions:
+                    result.append((Allow, user['id'], permissions))
         return result

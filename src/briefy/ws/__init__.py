@@ -3,6 +3,7 @@ from .initialization import initialize  # noqa
 from .renderer import JSONRenderer
 from briefy.ws.config import JWT_EXPIRATION
 from briefy.ws.config import JWT_SECRET
+from briefy.ws.auth import user_factory
 from pyramid.authorization import ACLAuthorizationPolicy
 
 import os
@@ -44,5 +45,9 @@ def includeme(config):
     config.include('pyramid_jwt')
     config.set_jwt_authentication_policy(private_key=JWT_SECRET,
                                          expiration=int(JWT_EXPIRATION))
+
+    # add authenticated user map as request attribute
+    config.add_request_method(user_factory, 'user', reify=True)
+
     # Scan views.
     config.scan("briefy.ws.views")

@@ -15,12 +15,22 @@ class HTTPUnauthorized(BaseHTTPUnauthorized):
         self.content_type = 'application/json'
 
 
+def user_factory(request):
+    """Create a user map from jwt token.
+
+    :param request:
+    :return: user map from jwt claims
+    """
+    user_id = request.authenticated_userid
+    fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
+    user = {key: request.jwt_claims[key] for key in fields}
+    user['id'] = user_id
+    return user
+
+
 def validate_jwt_token(request):
     """Use pyramid JWT to validate if the user is authenticated."""
     user_id = request.authenticated_userid
     if user_id is None:
         raise HTTPUnauthorized
-    fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
-    user = {key: request.jwt_claims[key] for key in fields}
-    user['id'] = user_id
-    request.user = user
+    return user_factory(request)
