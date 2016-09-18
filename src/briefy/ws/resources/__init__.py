@@ -22,7 +22,6 @@ class BaseResource:
     default_order_by = 'updated_at'
     default_order_direction = 1
 
-
     def __init__(self, request):
         """Initialize the service."""
         self.request = request
@@ -31,6 +30,23 @@ class BaseResource:
     def session(self):
         """Return a session object from the request."""
         return self.request.registry['db_session_factory']()
+
+    @property
+    def schema_read(self):
+        """Schema for read operations."""
+        return data.NullSchema(unknown='ignore')
+
+    @property
+    def schema(self):
+        """Returns the schema to validate this resource."""
+        method = self.request.method
+        colander_schema = getattr(
+            self,
+            'schema_{method}'.format(method=method.lower()),
+            self.schema_read
+        )
+        schema = CorniceSchema.from_colander(colander_schema)
+        return schema
 
     @property
     def default_filters(self) -> tuple:
@@ -175,7 +191,6 @@ class BaseResource:
             'data': records
         }
 
-
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
         model = self.model
@@ -255,11 +270,6 @@ class RESTService(BaseResource):
     )
 
     @property
-    def schema_read(self):
-        """Schema for read operations."""
-        return data.NullSchema(unknown='ignore')
-
-    @property
     def schema_write(self):
         """Schema for write operations."""
         colander_config = self.model.__colanderalchemy_config__
@@ -287,18 +297,6 @@ class RESTService(BaseResource):
             if child.title not in required_fields:
                 child.missing = colander.drop
                 child.default = colander.null
-        return schema
-
-    @property
-    def schema(self):
-        """Returns the schema to validate this resource."""
-        method = self.request.method
-        colander_schema = getattr(
-            self,
-            'schema_{method}'.format(method=method.lower()),
-            self.schema_read
-        )
-        schema = CorniceSchema.from_colander(colander_schema)
         return schema
 
     @view(validators='_run_validators')
@@ -368,24 +366,34 @@ class WorkflowAwareResource(BaseResource):
             workflow.context = context
             return workflow
 
+    @property
+    def schema_write(self):
+        """Schema for write operations."""
+        return data.WorkflowTransitionSchema(unknown='ignore')
+
     @view(validators='_run_validators')
     def collection_post(self):
         """Add a new instance.
 
         :returns: Newly created instance
         """
-        transition_id = self.request.validated['transition_id']
+        transition = self.request.validated['transition']
+        message = self.request.validated['message']
+
         workflow = self.workflow
-        if transition_id not in workflow.transitions:
+        if transition not in workflow.transitions:
             self.raise_invalid(
                 location='body',
                 name='transition_id',
-                description='Invalid transition: {id}'.format(id=transition_id)
+                description='Invalid transition: {id}'.format(id=transition)
             )
-        # TODO: Do somenthing
-        workflow.transitions[transition_id]()
-        # TODO: Payload
-        response = {'status': True}
+        # Execute transition
+        workflow.transitions[transition](message=message)
+
+        response = {
+            'status': True,
+            'message': 'Executed transition: {id}'.format(id=transition)
+        }
         return response
 
     @view(validators='_run_validators')

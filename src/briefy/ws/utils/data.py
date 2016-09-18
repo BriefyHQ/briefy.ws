@@ -1,11 +1,24 @@
 """Data utilities for Briefy webservices."""
-from colander import MappingSchema
-
 import ast
+import colander
 
 
-class NullSchema(MappingSchema):
+class NullSchema(colander.MappingSchema):
     """Colander schema to bypass validations."""
+
+
+class WorkflowTransitionSchema(colander.MappingSchema):
+    """Workflow schema for transitions."""
+
+    transition = colander.SchemaNode(
+        typ=colander.String(),
+        title='Transition to be executed.'
+    )
+    message = colander.SchemaNode(
+        typ=colander.String(),
+        title='Message for this transition.',
+        default='-'
+    )
 
 
 def native_value(value: str, field: str=None):
