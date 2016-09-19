@@ -56,16 +56,19 @@ class BaseFactory(object):
         result = []
         context_id = self.request.matchdict.get('id')
 
-        # make sure id is uid valid at this point
-        # request validators only run after permission checks
-        try:
-            uuid.UUID(context_id)
-        except ValueError:
-            return []
+        if context_id:
+            # make sure id is uid valid at this point
+            # request validators only run after permission checks
+            try:
+                uuid.UUID(context_id)
+            except ValueError:
+                return result
+        else:
+            return result
 
         model = self.model
         user = self.request.user
-        if model and user and context_id:
+        if model and user:
             context = model.get(context_id)
             if context:
                 wf = context.workflow
