@@ -6,6 +6,27 @@ from webob import Response
 import json
 
 
+class AuthenticatedUser:
+    """Class to represent current authenticated user.
+    """
+    _fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
+
+    def __init__(self, request):
+        """Initialize object from JWT token using pyramid jwt claims."""
+        self.id = request.authenticated_userid
+        for field in self._fields:
+            setattr(self, field, request.jwt_claims[field])
+
+    def to_dict(self):
+        """Create a dict representation of current user.
+
+        :return: dict serializable user data
+        """
+        fields = self._fields
+        fields.append('id')
+        return {field: getattr(self, field, None) for field in self._fields}
+
+
 class HTTPUnauthorized(BaseHTTPUnauthorized):
     """401 Unauthorized HTTP exception."""
     def __init__(self, msg='Unauthorized'):
@@ -15,12 +36,29 @@ class HTTPUnauthorized(BaseHTTPUnauthorized):
         self.content_type = 'application/json'
 
 
+def user_factory(request) -> AuthenticatedUser:
+    """Create a user map from jwt token.
+
+    :param request: pyramid request object.
+    :return: Authenticated user instance.
+    """
+    return AuthenticatedUser(request)
+
+
+def groupfinder(userid, request):
+    """Callback to the authentication policy to return the list of users.
+
+    :param userid: authenticatded userid.
+    :param request: pyramid request object.
+    :return: list of user groups
+    :rtype: list
+    """
+    return request.jwt_claims.get('groups', [])
+
+
 def validate_jwt_token(request):
     """Use pyramid JWT to validate if the user is authenticated."""
     user_id = request.authenticated_userid
     if user_id is None:
         raise HTTPUnauthorized
-    fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
-    user = {key: request.jwt_claims[key] for key in fields}
-    user['id'] = user_id
-    request.user = user
+    return user_factory(request)

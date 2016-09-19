@@ -5,6 +5,11 @@ History
 1.0.0 (Unreleased)
 ------------------
 
+* Create groupfinder callback and add it Authentication policy (JWT). (rudaporto)
+* Create new class to represent the current Authenticated user object in request. (rudaporto)
+* Add user_factory function as request method user attribute: request.user. (rudaporto)
+* Refactory auth validation to isolate user_factory function. (rudaporto)
+* New base context factory class to be used in all resource class as factory parameter. (rudaporto)
 * Add RESTService base class for REST resources. (ericof)
 * Integrate pyramid_jwt as authentication policy with same secreta as briefy.rolleiflex. (rudaporto)
 * Add validate_jwt_token validator to all methods on base resource, only authenticated calls will be permited. (rudaporto)

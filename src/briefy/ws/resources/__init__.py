@@ -22,8 +22,9 @@ class BaseResource:
     default_order_by = 'updated_at'
     default_order_direction = 1
 
-    def __init__(self, request):
+    def __init__(self, context, request):
         """Initialize the service."""
+        self.context = context
         self.request = request
 
     @property
@@ -299,7 +300,7 @@ class RESTService(BaseResource):
                 child.default = colander.null
         return schema
 
-    @view(validators='_run_validators')
+    @view(validators='_run_validators', permission='add')
     def collection_post(self):
         """Add a new instance.
 
@@ -313,14 +314,14 @@ class RESTService(BaseResource):
         session.flush()
         return obj
 
-    @view(validators='_run_validators')
+    @view(validators='_run_validators', permission='list')
     def collection_head(self):
         """Return the header with total objects for this request."""
         headers = self.request.response.headers
         records = self.get_records()
         headers['Total-Records'] = '{total}'.format(total=records['total'])
 
-    @view(validators='_run_validators')
+    @view(validators='_run_validators', permission='list')
     def collection_get(self):
         """Return a list of objects.
 
@@ -335,14 +336,14 @@ class RESTService(BaseResource):
             'data': collection,
         }
 
-    @view(validators='_run_validators')
+    @view(validators='_run_validators', permission='view')
     def get(self):
         """Get an instance of the model object."""
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
         return obj
 
-    @view(validators='_run_validators')
+    @view(validators='_run_validators', permission='edit')
     def put(self):
         """Update an existing object."""
         id = self.request.matchdict.get('id', '')
