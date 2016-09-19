@@ -22,6 +22,8 @@ class AuthenticatedUser:
 
         :return: dict serializable user data
         """
+        fields = self._fields
+        fields.append('id')
         return {field: getattr(self, field, None) for field in self._fields}
 
 
@@ -34,13 +36,24 @@ class HTTPUnauthorized(BaseHTTPUnauthorized):
         self.content_type = 'application/json'
 
 
-def user_factory(request):
+def user_factory(request) -> AuthenticatedUser:
     """Create a user map from jwt token.
 
-    :param request:
-    :return: user map from jwt claims
+    :param request: pyramid request object.
+    :return: Authenticated user instance.
     """
     return AuthenticatedUser(request)
+
+
+def groupfinder(userid, request):
+    """Callback to the authentication policy to return the list of users.
+
+    :param userid: authenticatded userid.
+    :param request: pyramid request object.
+    :return: list of user groups
+    :rtype: list
+    """
+    return request.jwt_claims.get('groups', [])
 
 
 def validate_jwt_token(request):

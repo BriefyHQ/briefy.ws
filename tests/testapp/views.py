@@ -71,5 +71,5 @@ def get_protected(request):
     """Returns protected information when the user is authenticated."""
     return {'status': 'success',
             'message': 'Protected information.',
-            'user': request.user,
+            'user': request.user.to_dict(),
             }
