@@ -11,11 +11,11 @@ class AuthenticatedUser:
     """
     _fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
 
-    def __init__(self, request):
+    def __init__(self, user_id, data):
         """Initialize object from JWT token using pyramid jwt claims."""
-        self.id = request.authenticated_userid
+        self.id = user_id
         for field in self._fields:
-            setattr(self, field, request.jwt_claims[field])
+            setattr(self, field, data.get(field))
 
     def to_dict(self):
         """Create a dict representation of current user.
@@ -40,9 +40,12 @@ def user_factory(request) -> AuthenticatedUser:
     """Create a user map from jwt token.
 
     :param request: pyramid request object.
-    :return: Authenticated user instance.
+    :return: Authenticated user instance or None
     """
-    return AuthenticatedUser(request)
+    user_id = request.authenticated_userid
+    if user_id:
+        used_data = request.jwt_claims
+        return AuthenticatedUser(user_id, used_data)
 
 
 def groupfinder(userid, request):
