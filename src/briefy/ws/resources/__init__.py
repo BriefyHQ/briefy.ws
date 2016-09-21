@@ -273,7 +273,7 @@ class BaseResource:
 class RESTService(BaseResource):
     """Rest service based on a model."""
 
-    default_excludes = ['created_at', 'updated_at', 'state_history', 'state', 'request']
+    default_excludes = ['created_at', 'updated_at', 'state_history', 'state']
 
     _required_fields = (
         ('PUT', tuple()),

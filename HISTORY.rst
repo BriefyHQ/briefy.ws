@@ -16,8 +16,8 @@ History
 * New base class to create workflow REST service to get informantion and trigger transitions on models. (ericof)
 * New helper integrated into resource to user query filters on the collection_get method of resource. (ericof)
 * BODY-26: Avoid invalid ID raise ValueError when acl are being evaluated. (rudaporto)
-* Add serializer for AuthenticatedUser object.
-* BODY-32: Attach current request in model instance after creation or loading in the resource.
+* Add serializer for AuthenticatedUser object. (rudaporto)
+* BODY-32: Attach current request in model instance after creation or loading in the resource. (rudaporto)
 
 
 0.1.0 (Unreleased)
