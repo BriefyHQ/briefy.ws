@@ -108,7 +108,7 @@ class BaseResource:
         return mapping
 
     def validate_id(self, request):
-        """Validate id in matchdict is UUID valid.
+        """Check if id parameter is UUID valid.
 
         :param request: pyramid request.
         :return:
@@ -151,6 +151,15 @@ class BaseResource:
         request.errors.add(location, name, description, **kwargs)
         raise json_error(request.errors)
 
+    def attach_request(self, obj):
+        """Attach current request in one model object instance.
+
+        :param obj: sqlalchemy model obj instance
+        :return: sqlalchemy model obj instance with current request as instance attribute
+        """
+        obj.request = self.request
+        return obj
+
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
 
@@ -159,7 +168,7 @@ class BaseResource:
         """
         model = self.model
         query = self._get_base_query()
-        obj = query.filter(model.id == id).first()
+        obj = query.filter(model.id == id).one_or_none()
 
         if not obj:
             raise NotFound(
@@ -168,7 +177,7 @@ class BaseResource:
                     id=id
                 )
             )
-        return obj
+        return self.attach_request(obj)
 
     def get_records(self):
         """Get all records for this resource and return a dictionary.
@@ -185,7 +194,7 @@ class BaseResource:
         query = self.sort_query(query, query_params)
 
         total = query.count()
-        records = query.all()
+        records = [self.attach_request(record) for record in query.all()]
 
         return {
             'total': total,
@@ -310,6 +319,7 @@ class RESTService(BaseResource):
         session = self.session
         model = self.model
         obj = model(**payload)
+        obj = self.attach_request(obj)
         session.add(obj)
         session.flush()
         return obj

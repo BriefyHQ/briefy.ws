@@ -1,5 +1,5 @@
 """Briefy WS default authentication helpers."""
-
+from briefy.common.utils.transformers import to_serializable
 from pyramid.httpexceptions import HTTPUnauthorized as BaseHTTPUnauthorized
 from webob import Response
 
@@ -25,6 +25,12 @@ class AuthenticatedUser:
         fields = self._fields
         fields.append('id')
         return {field: getattr(self, field, None) for field in self._fields}
+
+
+@to_serializable.register(AuthenticatedUser)
+def ts_authenticated_user(val):
+    """Serializer for AuthenticatedUser."""
+    return val.to_dict()
 
 
 class HTTPUnauthorized(BaseHTTPUnauthorized):
