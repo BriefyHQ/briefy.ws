@@ -1,10 +1,7 @@
 """Base Resources for briefy.ws."""
-from .events import ObjectCreatedEvent
-from .events import ObjectDeletedEvent
-from .events import ObjectLoadedEvent
-from .events import ObjectUpdatedEvent
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
+from briefy.ws.resources import events
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from colanderalchemy import SQLAlchemySchemaNode
@@ -27,10 +24,10 @@ class BaseResource:
     default_order_direction = 1
 
     _default_notify_events = {
-        'POST': ObjectCreatedEvent,
-        'PUT': ObjectUpdatedEvent,
-        'GET': ObjectLoadedEvent,
-        'DELETE': ObjectDeletedEvent,
+        'POST': events.ObjectCreatedEvent,
+        'PUT': events.ObjectUpdatedEvent,
+        'GET': events.ObjectLoadedEvent,
+        'DELETE': events.ObjectDeletedEvent,
     }
 
     def __init__(self, context, request):
