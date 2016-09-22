@@ -347,8 +347,8 @@ class RESTService(BaseResource):
         obj = model(**payload)
         obj = self.attach_request(obj)
         session.add(obj)
-        session.flush()
         self.notify_obj_event(obj)
+        session.flush()
         return obj
 
     @view(validators='_run_validators', permission='list')
