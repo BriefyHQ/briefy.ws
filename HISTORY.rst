@@ -18,6 +18,7 @@ History
 * BODY-26: Avoid invalid ID raise ValueError when acl are being evaluated. (rudaporto)
 * Add serializer for AuthenticatedUser object. (rudaporto)
 * BODY-32: Attach current request in model instance after creation or loading in the resource. (rudaporto)
+* BODY-38: REST Resources: notify events for the model instance lifecycle (POST, PUT, GET, DELETE) (rudaporto)
 
 
 0.1.0 (Unreleased)
