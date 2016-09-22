@@ -23,12 +23,7 @@ class BaseResource:
     default_order_by = 'updated_at'
     default_order_direction = 1
 
-    _default_notify_events = {
-        'POST': events.ObjectCreatedEvent,
-        'PUT': events.ObjectUpdatedEvent,
-        'GET': events.ObjectLoadedEvent,
-        'DELETE': events.ObjectDeletedEvent,
-    }
+    _default_notify_events = {}
 
     def __init__(self, context, request):
         """Initialize the service."""
@@ -301,6 +296,13 @@ class RESTService(BaseResource):
         ('PUT', tuple()),
     )
 
+    _default_notify_events = {
+        'POST': events.ObjectCreatedEvent,
+        'PUT': events.ObjectUpdatedEvent,
+        'GET': events.ObjectLoadedEvent,
+        'DELETE': events.ObjectDeletedEvent,
+    }
+
     @property
     def schema_write(self):
         """Schema for write operations."""
@@ -403,7 +405,7 @@ class WorkflowAwareResource(BaseResource):
             return workflow
 
     @property
-    def schema_write(self):
+    def schema_post(self):
         """Schema for write operations."""
         return data.WorkflowTransitionSchema(unknown='ignore')
 
