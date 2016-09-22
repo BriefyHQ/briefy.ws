@@ -1,4 +1,8 @@
 """Base Resources for briefy.ws."""
+from .events import ObjectCreatedEvent
+from .events import ObjectDeletedEvent
+from .events import ObjectLoadedEvent
+from .events import ObjectUpdatedEvent
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.utils import data
@@ -21,6 +25,13 @@ class BaseResource:
     friendly_name = ''
     default_order_by = 'updated_at'
     default_order_direction = 1
+
+    _default_notify_events = {
+        'POST': ObjectCreatedEvent,
+        'PUT': ObjectUpdatedEvent,
+        'GET': ObjectLoadedEvent,
+        'DELETE': ObjectDeletedEvent,
+    }
 
     def __init__(self, context, request):
         """Initialize the service."""
@@ -160,6 +171,16 @@ class BaseResource:
         obj.request = self.request
         return obj
 
+    def notify_obj_event(self, obj):
+        """Create right event object based on current request method.
+
+        :param obj: sqlalchemy model obj instance
+        """
+        request = self.request
+        event_klass = self._default_notify_events.get(request.method)
+        event = event_klass(obj, request)
+        request.registry.notify(event)
+
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
 
@@ -177,6 +198,7 @@ class BaseResource:
                     id=id
                 )
             )
+        self.notify_obj_event(obj)
         return self.attach_request(obj)
 
     def get_records(self):
@@ -195,6 +217,9 @@ class BaseResource:
 
         total = query.count()
         records = [self.attach_request(record) for record in query.all()]
+
+        for record in records:
+            self.notify_obj_event(record)
 
         return {
             'total': total,
@@ -315,12 +340,14 @@ class RESTService(BaseResource):
 
         :returns: Newly created instance
         """
-        payload = self.request.validated
+        request = self.request
+        payload = request.validated
         session = self.session
         model = self.model
         obj = model(**payload)
         obj = self.attach_request(obj)
         session.add(obj)
+        self.notify_obj_event(obj)
         session.flush()
         return obj
 
@@ -359,6 +386,7 @@ class RESTService(BaseResource):
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
         obj.update(self.request.validated)
+        self.notify_obj_event(obj)
         self.session.flush()
         return obj
 
