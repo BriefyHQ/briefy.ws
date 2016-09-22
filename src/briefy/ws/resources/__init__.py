@@ -170,8 +170,9 @@ class BaseResource:
         """
         request = self.request
         event_klass = self._default_notify_events.get(request.method)
-        event = event_klass(obj, request)
-        request.registry.notify(event)
+        if event_klass:
+            event = event_klass(obj, request)
+            request.registry.notify(event)
 
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
@@ -426,7 +427,9 @@ class WorkflowAwareResource(BaseResource):
                 description='Invalid transition: {id}'.format(id=transition)
             )
         # Execute transition
-        workflow.transitions[transition](message=message)
+        transition_method = getattr(workflow, transition, None)
+        if transition_method:
+            transition_method(message=message)
 
         response = {
             'status': True,
