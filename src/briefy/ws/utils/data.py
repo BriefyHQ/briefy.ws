@@ -17,6 +17,7 @@ class WorkflowTransitionSchema(colander.MappingSchema):
     message = colander.SchemaNode(
         typ=colander.String(),
         title='Message for this transition.',
+        missing=colander.drop,
         default='-'
     )
 
