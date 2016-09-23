@@ -72,6 +72,7 @@ def test_get_public_user_info(testapp):
     assert data['last_name'] == 'Salgado'
     assert data['fullname'] == 'Sebastião Salgado'
 
+
 def test_get_public_user_info_not_found(testapp):
     """Test get_public_user_info function for a non existing user."""
     user_id = 'fake'
