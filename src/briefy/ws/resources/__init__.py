@@ -1,4 +1,6 @@
 """Base Resources for briefy.ws."""
+from briefy.common.workflow.exceptions import WorkflowPermissionException
+from briefy.common.workflow.exceptions import WorkflowTransitionException
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
@@ -9,6 +11,8 @@ from cornice.schemas import CorniceSchema
 from cornice.util import json_error
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
+from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
+
 
 import colander
 import sqlalchemy as sa
@@ -418,24 +422,33 @@ class WorkflowAwareResource(BaseResource):
         """
         transition = self.request.validated['transition']
         message = self.request.validated['message']
-
         workflow = self.workflow
-        if transition not in workflow.transitions:
-            self.raise_invalid(
-                location='body',
-                name='transition_id',
-                description='Invalid transition: {id}'.format(id=transition)
-            )
-        # Execute transition
-        transition_method = getattr(workflow, transition, None)
-        if transition_method:
-            transition_method(message=message)
 
-        response = {
-            'status': True,
-            'message': 'Executed transition: {id}'.format(id=transition)
-        }
-        return response
+        # Execute transition
+        try:
+            transition_method = getattr(workflow, transition, None)
+            if transition_method:
+                transition_method(message=message)
+                response = {
+                    'status': True,
+                    'message': 'Transition executed: {id}'.format(id=transition)
+                }
+                return response
+            else:
+                msg = 'Transition not found: {id}'.format(id=transition)
+                raise NotFound(msg)
+        except WorkflowPermissionException:
+            msg = 'Unauthorized transition: {id}'.format(id=transition)
+            raise Unauthorized(msg)
+        except WorkflowTransitionException:
+            valid_transitions_list = str(list(workflow.transitions))
+            state = workflow.state.name
+            msg = 'Invalid transition: {id} (for state: {state}). ' \
+                  'Your valid transitions list are: {transitions}'
+            msg = msg.format(id=transition,
+                             state=state,
+                             transitions=valid_transitions_list)
+            self.raise_invalid('body', 'transition', msg)
 
     @view(validators='_run_validators')
     def collection_get(self):
