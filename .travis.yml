@@ -14,7 +14,6 @@ env:
   - TOXENV=py35
 install:
 - pip install -r requirements/dev.txt
-- pip install flake8
 script:
 - tox -e ${TOXENV}
 - make lint
