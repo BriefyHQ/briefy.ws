@@ -443,8 +443,8 @@ class WorkflowAwareResource(BaseResource):
         except WorkflowTransitionException:
             valid_transitions_list = str(list(workflow.transitions))
             state = workflow.state.name
-            msg = '''Invalid transition: {id} (for state: {state}).
-            Your valid transitions list are: {transitions}'''
+            msg = 'Invalid transition: {id} (for state: {state}). ' \
+                  'Your valid transitions list are: {transitions}'
             msg = msg.format(id=transition,
                              state=state,
                              transitions=valid_transitions_list)
