@@ -441,9 +441,9 @@ class WorkflowAwareResource(BaseResource):
             msg = 'Unauthorized transition: {id}'.format(id=transition)
             raise Unauthorized(msg)
         except WorkflowTransitionException:
-            msg = 'Invalid transition: {id} for state: {state}'.format(id=transition,
-                                                                       state=workflow.state)
-            self.raise_invalid('body', 'transitin', msg)
+            msg = 'Invalid transition: {id} (for state: {state})'
+            msg = msg.format(id=transition, state=workflow.state.name)
+            self.raise_invalid('body', 'transition', msg)
 
     @view(validators='_run_validators')
     def collection_get(self):
