@@ -1,5 +1,6 @@
 """Base Resources for briefy.ws."""
 from briefy.common.workflow.exceptions import WorkflowPermissionException
+from briefy.common.workflow.exceptions import WorkflowTransitionException
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
@@ -422,7 +423,7 @@ class WorkflowAwareResource(BaseResource):
         transition = self.request.validated['transition']
         message = self.request.validated['message']
         workflow = self.workflow
-        
+
         # Execute transition
         try:
             transition_method = getattr(workflow, transition, None)
@@ -439,6 +440,10 @@ class WorkflowAwareResource(BaseResource):
         except WorkflowPermissionException:
             msg = 'Unauthorized transition: {id}'.format(id=transition)
             raise Unauthorized(msg)
+        except WorkflowTransitionException:
+            msg = 'Invalid transition: {id} for state: {state}'.format(id=transition,
+                                                                       state=workflow.state)
+            self.raise_invalid('body', 'transitin', msg)
 
     @view(validators='_run_validators')
     def collection_get(self):
