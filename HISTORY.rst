@@ -20,6 +20,7 @@ History
 * BODY-32: Attach current request in model instance after creation or loading in the resource. (rudaporto)
 * BODY-38: REST Resources: notify events for the model instance lifecycle (POST, PUT, GET, DELETE) (rudaporto)
 * BODY-39: Fix workflow resource POST transition (rudaporto)
+* BODY-44: Public information about a user. (ericof)
 
 
 0.1.0 (Unreleased)
