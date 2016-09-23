@@ -81,7 +81,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source briefy.common py.test
+	coverage run --source briefy.ws py.test
 	
 		coverage report -m
 		coverage html
