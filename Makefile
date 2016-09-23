@@ -70,7 +70,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 lint: ## check style with flake8
-	flake8 src/briefy/ws tests setup.py
+	flake8 src/briefy/common setup.py
+	flake8 --ignore=D102,D103,D205,D101,D400,D210,D401,D100 tests
 
 test: lint ## run tests quickly with the default Python
 	py.test --cov-report term-missing --cov=briefy.ws tests
