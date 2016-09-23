@@ -21,6 +21,9 @@ History
 * BODY-38: REST Resources: notify events for the model instance lifecycle (POST, PUT, GET, DELETE). (rudaporto)
 * BODY-39: Fix workflow resource POST transition. (rudaporto)
 * BODY-45: Fix workflow service POST transitions to return correct error codes. (rudaporto)
+* BODY-38: REST Resources: notify events for the model instance lifecycle (POST, PUT, GET, DELETE) (rudaporto)
+* BODY-39: Fix workflow resource POST transition (rudaporto)
+* BODY-44: Public information about a user. (ericof)
 
 
 0.1.0 (Unreleased)
