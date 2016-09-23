@@ -17,7 +17,7 @@ install:
 - pip install flake8
 script:
 - tox -e ${TOXENV}
-- flake8 src/briefy/ws setup.py
+- make lint
 after_success:
 - make docs
 notifications:
