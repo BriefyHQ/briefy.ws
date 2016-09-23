@@ -4,6 +4,7 @@ from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
+from briefy.ws.utils import user
 from colanderalchemy import SQLAlchemySchemaNode
 from cornice.schemas import CorniceSchema
 from cornice.util import json_error
@@ -51,6 +52,14 @@ class BaseResource:
         )
         schema = CorniceSchema.from_colander(colander_schema)
         return schema
+
+    def get_user_info(self, user_id:str) -> dict:
+        """Get public information about an user with given user_id.
+
+        :param user_id: Id of the user.
+        :return: Public information about this user.
+        """
+        return user.get_public_user_info(user_id)
 
     @property
     def default_filters(self) -> tuple:
