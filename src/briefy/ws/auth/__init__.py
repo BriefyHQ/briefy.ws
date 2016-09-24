@@ -1,4 +1,5 @@
 """Briefy WS default authentication helpers."""
+from briefy.common.types import BaseUser
 from briefy.common.utils.transformers import to_serializable
 from pyramid.httpexceptions import HTTPUnauthorized as BaseHTTPUnauthorized
 from webob import Response
@@ -6,25 +7,9 @@ from webob import Response
 import json
 
 
-class AuthenticatedUser:
-    """Class to represent current authenticated user.
+class AuthenticatedUser(BaseUser):
+    """Class to representing current authenticated user.
     """
-    _fields = ['locale', 'fullname', 'first_name', 'last_name', 'email', 'groups']
-
-    def __init__(self, user_id, data):
-        """Initialize object from JWT token using pyramid jwt claims."""
-        self.id = user_id
-        for field in self._fields:
-            setattr(self, field, data.get(field))
-
-    def to_dict(self):
-        """Create a dict representation of current user.
-
-        :return: dict serializable user data
-        """
-        fields = self._fields
-        fields.append('id')
-        return {field: getattr(self, field, None) for field in self._fields}
 
 
 @to_serializable.register(AuthenticatedUser)
