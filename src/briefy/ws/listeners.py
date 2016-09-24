@@ -1,12 +1,8 @@
-"""briefy.ws SQLAlchemy listener to events for Base model."""
-
-from briefy.common.db import model
+"""briefy.ws sqlalchemy event handlers for model classes."""
 from pyramid.threadlocal import get_current_request
-from sqlalchemy import event
 
 
-@event.listens_for(model.Base, 'init')
-def base_receive_init(target, args, kwargs):
+def base_receive_init_workflow_context(target, args, kwargs):
     """Listener to insert request.user as workflow_context init parameter of all models.
 
     :param target: model instance
@@ -20,8 +16,7 @@ def base_receive_init(target, args, kwargs):
             kwargs['workflow_context'] = auth_user
 
 
-@event.listens_for(model.Base, 'load')
-def base_receive_load(target, context):
+def base_receive_load_workflow_context(target, context):
     """Listener to set request.user as workflow_context in all models.
 
     :param target: model instance
