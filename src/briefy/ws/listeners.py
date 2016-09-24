@@ -1,5 +1,6 @@
 """briefy.ws sqlalchemy event handlers for model classes."""
 from pyramid.threadlocal import get_current_request
+from sqlalchemy import event as sa_event
 
 
 def base_receive_init_workflow_context(target, args, kwargs):
@@ -27,3 +28,14 @@ def base_receive_load_workflow_context(target, context):
         auth_user = request.user
         if auth_user and hasattr(target, 'workflow_context'):
             target.workflow_context = auth_user
+
+
+def register_workflow_context_listeners(models) -> list:
+    """For all models in the list register the workflow context handlers.
+
+    :param models: list of model classes
+    :type models: list
+    """
+    for model_klass in models:
+        sa_event.listen(model_klass, 'init', base_receive_init_workflow_context)
+        sa_event.listen(model_klass, 'load', base_receive_load_workflow_context)
