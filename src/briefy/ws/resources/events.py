@@ -10,15 +10,19 @@ class ResourceObjectEvent:
 
 class ObjectCreatedEvent(ResourceObjectEvent):
     """Event to notify database object creation."""
+    pass
 
 
 class ObjectLoadedEvent(ResourceObjectEvent):
     """Event to notify database object load."""
+    pass
 
 
 class ObjectUpdatedEvent(ResourceObjectEvent):
     """Event to notify database object updated."""
+    pass
 
 
 class ObjectDeletedEvent(ResourceObjectEvent):
     """Event to notify database object deleted."""
+    pass
