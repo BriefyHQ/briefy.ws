@@ -1,4 +1,5 @@
 """Base Resources for briefy.ws."""
+from briefy.common.workflow.base import WorkflowTransition
 from briefy.common.workflow.exceptions import WorkflowPermissionException
 from briefy.common.workflow.exceptions import WorkflowTransitionException
 from briefy.ws.auth import validate_jwt_token
@@ -449,7 +450,7 @@ class WorkflowAwareResource(BaseResource):
         # Execute transition
         try:
             transition_method = getattr(workflow, transition, None)
-            if transition_method:
+            if isinstance(transition_method, WorkflowTransition):
                 transition_method(message=message)
                 response = {
                     'status': True,
