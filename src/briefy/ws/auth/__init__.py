@@ -50,8 +50,10 @@ def user_factory(request) -> AuthenticatedUser:
     """
     user_id = request.authenticated_userid
     if user_id:
-        used_data = request.jwt_claims
-        return AuthenticatedUser(user_id, used_data)
+        data = request.jwt_claims
+        return AuthenticatedUser(user_id, data)
+    else:
+        return None
 
 
 def groupfinder(userid, request):

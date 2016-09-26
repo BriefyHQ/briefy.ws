@@ -20,6 +20,7 @@ class RequestRegistry(dict):
             pass
 
     def __missing__(self, key):
+        """The missing"""
         self.used_keys.append(key)
         return self.Session()
 
@@ -45,6 +46,7 @@ class Model:
         self.id = 1
 
     def __getattr__(self, attr):
+        """The getattr"""
         return self
 
     def __call__(self, *args):
