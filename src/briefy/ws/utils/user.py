@@ -17,8 +17,11 @@ def _get_user_info_from_service(user_id: str) -> dict:
         base_url=USER_SERVICE_BASE,
         user_id=user_id
     )
+    # TODO: improve this to user current user locale
+    headers = {'X-Locale': 'en_GB'}
     resp = requests.get(
-        endpoint
+        endpoint,
+        headers=headers
     )
     if resp.status_code == 200:
         raw_data = resp.json()
@@ -34,7 +37,7 @@ def get_public_user_info(user_id: str) -> dict:
     :return: Dictionary with public user information.
     """
     data = {
-        'id': '',
+        'id': user_id,
         'first_name': '',
         'last_name': '',
         'fullname': '',
@@ -46,3 +49,16 @@ def get_public_user_info(user_id: str) -> dict:
         data['last_name'] = raw_data['last_name']
         data['fullname'] = raw_data.get('fullname')
     return data
+
+
+def add_user_info_to_state_history(state_history):
+    """Receives object state history and add user information.
+
+    :param state_history: list of workflow state history.
+    """
+    for item in state_history:
+        user_id = item.get('actor', None)
+        if user_id:
+            new_actor = get_public_user_info(user_id)
+            if new_actor:
+                item['actor'] = new_actor

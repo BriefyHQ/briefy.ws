@@ -87,7 +87,7 @@ def test_get_public_user_info_not_found(testapp):
     assert 'password' not in data
     assert 'locale' not in data
 
-    assert data['id'] == ''
+    assert data['id'] == user_id
     assert data['first_name'] == ''
     assert data['last_name'] == ''
     assert data['fullname'] == ''

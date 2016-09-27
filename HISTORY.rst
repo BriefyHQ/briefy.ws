@@ -25,6 +25,7 @@ History
 * BODY-39: Fix workflow resource POST transition (rudaporto)
 * BODY-44: Public information about a user. (ericof)
 * BODY-47: Add sqlalchemy listener events to inject request on model creation and load. (rudaporto)
+* New function to update state_history actor field with user map data. (rudaporto)
 
 
 0.1.0 (Unreleased)
