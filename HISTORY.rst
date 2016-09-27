@@ -2,8 +2,8 @@
 History
 =======
 
-1.0.0 (Unreleased)
-------------------
+1.1.0
+-----
 
 * Create groupfinder callback and add it Authentication policy (JWT). (rudaporto)
 * Create new class to represent the current Authenticated user object in request. (rudaporto)
