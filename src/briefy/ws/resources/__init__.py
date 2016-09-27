@@ -444,7 +444,7 @@ class WorkflowAwareResource(BaseResource):
         :returns: Newly created instance
         """
         transition = self.request.validated['transition']
-        message = self.request.validated['message']
+        message = self.request.validated.get('message', '')
         workflow = self.workflow
 
         # Execute transition
