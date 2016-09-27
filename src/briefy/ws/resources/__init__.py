@@ -1,4 +1,5 @@
 """Base Resources for briefy.ws."""
+from briefy.common.workflow.base import AttachedTransition
 from briefy.common.workflow.exceptions import WorkflowPermissionException
 from briefy.common.workflow.exceptions import WorkflowTransitionException
 from briefy.ws.auth import validate_jwt_token
@@ -176,13 +177,14 @@ class BaseResource:
         obj.request = self.request
         return obj
 
-    def notify_obj_event(self, obj):
+    def notify_obj_event(self, obj, method=None):
         """Create right event object based on current request method.
 
         :param obj: sqlalchemy model obj instance
         """
         request = self.request
-        event_klass = self._default_notify_events.get(request.method)
+        method = method or request.method
+        event_klass = self._default_notify_events.get(method)
         if event_klass:
             event = event_klass(obj, request)
             request.registry.notify(event)
@@ -204,7 +206,7 @@ class BaseResource:
                     id=id
                 )
             )
-        self.notify_obj_event(obj)
+        self.notify_obj_event(obj, 'GET')
         return self.attach_request(obj)
 
     def get_records(self):
@@ -225,7 +227,7 @@ class BaseResource:
         records = [self.attach_request(record) for record in query.all()]
 
         for record in records:
-            self.notify_obj_event(record)
+            self.notify_obj_event(record, 'GET')
 
         return {
             'total': total,
@@ -360,7 +362,7 @@ class RESTService(BaseResource):
         obj = model(**payload)
         obj = self.attach_request(obj)
         session.add(obj)
-        self.notify_obj_event(obj)
+        self.notify_obj_event(obj, 'POST')
         session.flush()
         return obj
 
@@ -399,8 +401,19 @@ class RESTService(BaseResource):
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
         obj.update(self.request.validated)
-        self.notify_obj_event(obj)
+        self.notify_obj_event(obj, 'PUT')
         self.session.flush()
+        return obj
+
+    @view(permission='delete')
+    def delete(self):
+        """Soft delete an object if there is an apropriate transition for it."""
+        obj = self.get_one(id)
+        # We do not delete things from the Database -
+        # The delete event should be enough to trigger
+        # transitions that will set a delete-like
+        # state for the object, if appropriate
+        self.notify_obj_event(obj, 'DELETE')
         return obj
 
 
@@ -417,6 +430,7 @@ class WorkflowAwareResource(BaseResource):
         if workflow:
             workflow.context = context
             return workflow
+        return None
 
     @property
     def schema_post(self):
@@ -436,7 +450,7 @@ class WorkflowAwareResource(BaseResource):
         # Execute transition
         try:
             transition_method = getattr(workflow, transition, None)
-            if transition_method:
+            if isinstance(transition_method, AttachedTransition):
                 transition_method(message=message)
                 response = {
                     'status': True,
