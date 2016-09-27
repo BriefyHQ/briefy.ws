@@ -8,15 +8,16 @@ branches:
 services:
 - docker
 env:
+  global:
+  - JWT_SECRET=e68d4ffb-d621-4d17-a33e-00183e9553e1 JWT_EXPIRATION=84600
   matrix:
   - TOXENV=py35
 install:
 - pip install -r requirements/dev.txt
-- pip install flake8
 script:
 - tox -e ${TOXENV}
-- flake8 src/briefy/ws setup.py
+- make lint
 after_success:
 - make docs
 notifications:
-  slack: robyandjack:qxjOPwcrGEtVx3aCQBr812t9
+  slack: briefy:qxjOPwcrGEtVx3aCQBr812t9

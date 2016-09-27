@@ -1,5 +1,6 @@
 """Test error views."""
 
+
 def test_403(testapp):
     """Test 403 error page."""
     app = testapp
