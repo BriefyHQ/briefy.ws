@@ -4,13 +4,19 @@ from briefy.common.event import IDataEvent
 from briefy.ws import logger
 from zope.interface import implementer
 
+import json
 
-class BaseResourceObjectEvent(BaseEvent):
+
+class BaseResourceObjectEvent:
     """Base class for object events: load and delete."""
 
-    def __init__(self, obj, request):
+    def __init__(self, obj, request, **kwargs):
         self.request = request
         self.obj = obj
+        try:
+            super().__init__(obj, **kwargs)
+        except TypeError:
+            pass  # TODO: fix this to look to __mro__ and use different call
 
 
 class ObjectLoadedEvent(BaseResourceObjectEvent):
@@ -32,25 +38,25 @@ class ResourceObjectEvent(BaseResourceObjectEvent, BaseEvent):
     logger = logger
 
     def __init__(self, obj, request):
-        self.request = request
         user = getattr(request, 'user', None)
         if user:
             user_id = user.id
         else:
-            user_id=None
-        super().__init__(obj, user_id)
+            user_id = None
+        kwargs = dict(actor=user_id, request_id=None)
+        super().__init__(obj, request, **kwargs)
 
 
 class ObjectCreatedEvent(ResourceObjectEvent):
     """Event to notify database object creation."""
 
-    event_name = 'resource_obj.created'
+    event_name = 'obj.created'
 
 
 class ObjectUpdatedEvent(ResourceObjectEvent):
     """Event to notify database object updated."""
 
-    event_name = 'resource_obj.updated'
+    event_name = 'obj.updated'
 
 
 class IWorkflowTransitionEvent(IDataEvent):
@@ -68,14 +74,44 @@ class WorkflowTranstionEvent(BaseEvent):
         model_name = self.obj.__class__.__name__.lower()
         transition_name = self.transition.name
         name = '{model_name}.workflow.{transition_name}'
-        return name.format(model_name=model_name, transiton_name=transition_name)
+        return name.format(model_name=model_name, transition_name=transition_name)
 
     def __init__(self, obj, request, transition):
-        self.request = request
         self.transition = transition
+        self.request = request
+        self.obj = obj
         user = getattr(request, 'user', None)
         if user:
             user_id = user.id
         else:
-            user_id=None
-        super().__init__(obj, user_id)
+            user_id = None
+        kwargs = dict(actor=user_id, request_id=None)
+        super().__init__(obj, **kwargs)
+
+    def __call__(self):
+        """Notify about the event.
+
+        :returns: Id from message in the queue
+        :rtype: str
+        """
+        logger = self.logger
+        queue = self.queue
+        payload = {
+            'event_name': self.event_name,
+            'actor': self.actor,
+            'guid': self.guid,
+            'created_at': self.created_at,
+            'request_id': self.request_id,
+            'data': json.loads(self.data),
+            'transition': self.transition.name,
+        }
+        message_id = ''
+        try:
+            message_id = queue.write_message(payload)
+        except Exception as e:
+            logger.error('Event {} not fired. Exception: {}'.format(self.event_name, e),
+                         extra={'payload': payload})
+        else:
+            logger.debug('Event {} fired with message {}'.format(self.event_name, message_id))
+
+        return message_id
