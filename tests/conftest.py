@@ -1,8 +1,12 @@
 """Conftest for briefy.ws."""
+from briefy import common
 from briefy.ws.auth import AuthenticatedUser
 from tests.testapp import main as _testapp
+from zope.configuration.xmlconfig import XMLConfig
 
 import pytest
+
+XMLConfig('configure.zcml', common)()
 
 
 @pytest.fixture('class')

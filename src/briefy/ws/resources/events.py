@@ -18,6 +18,18 @@ class BaseResourceObjectEvent:
         except TypeError:
             pass  # TODO: fix this to look to __mro__ and use different call
 
+    def __call__(self):
+        """Notify about the event, need to be implemented by subclass.
+
+        :returns: Id from message in the queue
+        :rtype: str
+        """
+        try:
+            super().__call__()
+        except AttributeError:
+            pass  # TODO: fix this to look to __mro__ and use different call
+        return ''
+
 
 class ObjectLoadedEvent(BaseResourceObjectEvent):
     """Event to notify database object load."""
