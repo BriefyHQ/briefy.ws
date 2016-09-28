@@ -57,8 +57,9 @@ def add_user_info_to_state_history(state_history):
     :param state_history: list of workflow state history.
     """
     for item in state_history:
-        user_id = item.get('actor', None)
-        if user_id:
+        user = item.get('actor', None)
+        if isinstance(user, str):
+            user_id = user  # first call where actor is a UUID string
             new_actor = get_public_user_info(user_id)
             if new_actor:
                 item['actor'] = new_actor
