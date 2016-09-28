@@ -67,7 +67,7 @@ class WorkflowTranstionEvent(BaseEvent):
     def event_name(self):
         model_name = self.obj.__class__.__name__.lower()
         transition_name = self.transition.name
-        name = 'workflow.{model_name}.{transtion_name}'
+        name = '{model_name}.workflow.{transition_name}'
         return name.format(model_name=model_name, transiton_name=transition_name)
 
     def __init__(self, obj, request, transition):
