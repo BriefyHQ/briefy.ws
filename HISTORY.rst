@@ -2,12 +2,14 @@
 History
 =======
 
-1.2.0 (Unreleased)
+1.1.1 (Unreleased)
 ------------------
 
+* BODY-54: Improve resource events to enable sqs message queue and workflow events. (rudaporto)
 
-1.1.0
------
+
+1.1.0 (2016-09-27)
+------------------
 
 * Create groupfinder callback and add it Authentication policy (JWT). (rudaporto)
 * Create new class to represent the current Authenticated user object in request. (rudaporto)
@@ -33,9 +35,10 @@ History
 * Fix workflow transition to not crash with empty message on body. (rudaporto)
 
 
-0.1.0 (Unreleased)
-------------------
+0.1.0 (internal release)
+------------------------
 
 * /__lbheartbeat__ endpoint to be used with load balancers. (ericof)
 * Error views for 403, 404 and 50x status codes. (ericof)
 * Initial implementation. (ericof)
+
