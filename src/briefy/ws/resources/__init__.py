@@ -188,6 +188,8 @@ class BaseResource:
         if event_klass:
             event = event_klass(obj, request)
             request.registry.notify(event)
+            # also execute the event to dispatch to sqs if needed
+            event()
 
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
@@ -362,8 +364,8 @@ class RESTService(BaseResource):
         obj = model(**payload)
         obj = self.attach_request(obj)
         session.add(obj)
-        self.notify_obj_event(obj, 'POST')
         session.flush()
+        self.notify_obj_event(obj, 'POST')
         return obj
 
     @view(validators='_run_validators', permission='list')
@@ -401,8 +403,8 @@ class RESTService(BaseResource):
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
         obj.update(self.request.validated)
-        self.notify_obj_event(obj, 'PUT')
         self.session.flush()
+        self.notify_obj_event(obj, 'PUT')
         return obj
 
     @view(permission='delete')
@@ -443,6 +445,7 @@ class WorkflowAwareResource(BaseResource):
 
         :returns: Newly created instance
         """
+        request = self.request
         transition = self.request.validated['transition']
         message = self.request.validated.get('message', '')
         workflow = self.workflow
@@ -452,10 +455,19 @@ class WorkflowAwareResource(BaseResource):
             transition_method = getattr(workflow, transition, None)
             if isinstance(transition_method, AttachedTransition):
                 transition_method(message=message)
+
+                wf_event = events.WorkflowTranstionEvent(workflow.document,
+                                                         request,
+                                                         transition_method)
+                request.registry.notify(wf_event)
+                # also execute the event to dispatch to sqs if needed
+                wf_event()
+
                 response = {
                     'status': True,
                     'message': 'Transition executed: {id}'.format(id=transition)
                 }
+
                 return response
             else:
                 msg = 'Transition not found: {id}'.format(id=transition)
