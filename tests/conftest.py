@@ -1,4 +1,5 @@
 """Conftest for briefy.ws."""
+from briefy.ws.auth import AuthenticatedUser
 from tests.testapp import main as _testapp
 
 import pytest
@@ -25,7 +26,10 @@ def login(request, testapp):
     for item in ['message', 'provider', 'user', 'status', 'token']:
         assert item in result.keys()
 
+    user = result.get('user')
     cls = request.cls
-    cls.token = result.get('token')
-    cls.user = result.get('user')
-    cls.app = testapp
+    if cls:
+        cls.token = result.get('token')
+        cls.user = user
+        cls.app = testapp
+    return AuthenticatedUser(user.get('id'), user)
