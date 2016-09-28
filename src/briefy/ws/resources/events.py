@@ -114,7 +114,7 @@ class WorkflowTranstionEvent(BaseEvent):
             'guid': self.guid,
             'created_at': self.created_at,
             'request_id': self.request_id,
-            'data': json.loads(self.data),
+            'data': self.obj.to_dict(),
             'transition': self.transition.name,
         }
         message_id = ''
