@@ -183,6 +183,8 @@ class BaseResource:
         :param obj: sqlalchemy model obj instance
         """
         request = self.request
+        if 'Briefy-SyncBot' in request.headers.get('User-Agent', ''):
+            return
         method = method or request.method
         event_klass = self._default_notify_events.get(method)
         if event_klass:
