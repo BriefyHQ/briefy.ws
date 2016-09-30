@@ -6,6 +6,7 @@ History
 ------------------
 
 * BODY-54: Improve resource events to enable sqs message queue and workflow events. (rudaporto)
+* Move validate_id function to validator module and fix tests. (rudaporto)
 
 
 1.1.0 (2016-09-27)

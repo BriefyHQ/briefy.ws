@@ -1,5 +1,6 @@
 from briefy.ws.resources import RESTService
 from briefy.ws.resources import events
+from pyramid.testing import DummyRequest
 from unittest.mock import Mock
 
 
@@ -27,12 +28,12 @@ class RequestRegistry(dict):
         self.notifications.append(event)
 
 
-class Request:
+class Request(DummyRequest):
     def __init__(self):
+        super().__init__()
         self.registry = RequestRegistry()
 
     validated = {}
-
     matchdict = Mock()
 
 

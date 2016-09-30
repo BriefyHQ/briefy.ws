@@ -5,6 +5,7 @@ from briefy.common.workflow.exceptions import WorkflowTransitionException
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
+from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from briefy.ws.utils import user
@@ -130,15 +131,7 @@ class BaseResource:
         :param request: pyramid request.
         :return:
         """
-        path_id = request.matchdict.get('id')
-        if path_id is None:
-            return
-
-        try:
-            uuid.UUID(path_id)
-        except ValueError as e:
-            request.errors.add('path', 'id',
-                               'The id informed is not 16 byte uuid valid.')
+        validate_id(request)
 
     def _run_validators(self, request):
         """Run all validators for the current http method.
