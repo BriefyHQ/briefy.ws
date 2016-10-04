@@ -2,7 +2,11 @@
 History
 =======
 
-1.1.1 (Unreleased)
+1.1.2 (Unreleased)
+------------------
+
+
+1.1.1 (2016-10-04)
 ------------------
 
 * BODY-54: Improve resource events to enable sqs message queue and workflow events. (rudaporto)
