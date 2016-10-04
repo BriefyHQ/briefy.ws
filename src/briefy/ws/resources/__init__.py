@@ -354,8 +354,16 @@ class RESTService(BaseResource):
         """
         request = self.request
         payload = request.validated
-        session = self.session
         model = self.model
+
+        # verify if object with same ID exists
+        obj_id = payload.get('id')
+        if obj_id:
+            obj_exists = model.get(obj_id)
+            if obj_exists:
+                self.raise_invalid('body', 'id', 'Duplicate object UUID: {id}'.format(id=obj_id))
+
+        session = self.session
         obj = model(**payload)
         obj = self.attach_request(obj)
         session.add(obj)

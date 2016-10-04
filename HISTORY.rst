@@ -7,6 +7,8 @@ History
 
 * BODY-54: Improve resource events to enable sqs message queue and workflow events. (rudaporto)
 * Move validate_id function to validator module and fix tests. (rudaporto)
+* BODY-58: Avoid transaction rollback when connection to internal user service fails. (rudaporto)
+* When id field is in the collection_post body, check if alredy exists a registry with same id. (rudaporto)
 
 
 1.1.0 (2016-09-27)
