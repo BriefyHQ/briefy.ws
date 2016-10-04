@@ -8,8 +8,7 @@ import json
 
 
 class AuthenticatedUser(BaseUser):
-    """Class to representing current authenticated user.
-    """
+    """Class to representing current authenticated user."""
 
 
 @to_serializable.register(AuthenticatedUser)
@@ -20,7 +19,9 @@ def ts_authenticated_user(val):
 
 class HTTPUnauthorized(BaseHTTPUnauthorized):
     """401 Unauthorized HTTP exception."""
+
     def __init__(self, msg='Unauthorized'):
+        """Customize init to create a json response object and body."""
         body = {'status': 401, 'message': msg}
         Response.__init__(self, json.dumps(body))
         self.status = 401

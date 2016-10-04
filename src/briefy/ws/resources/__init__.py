@@ -5,6 +5,7 @@ from briefy.common.workflow.exceptions import WorkflowTransitionException
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
+from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from briefy.ws.utils import user
@@ -18,7 +19,6 @@ from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
 import colander
 import sqlalchemy as sa
-import uuid
 
 
 class BaseResource:
@@ -48,7 +48,7 @@ class BaseResource:
 
     @property
     def schema(self):
-        """Returns the schema to validate this resource."""
+        """Return the schema to validate this resource."""
         method = self.request.method
         colander_schema = getattr(
             self,
@@ -58,7 +58,7 @@ class BaseResource:
         schema = CorniceSchema.from_colander(colander_schema)
         return schema
 
-    def get_user_info(self, user_id:str) -> dict:
+    def get_user_info(self, user_id: str) -> dict:
         """Get public information about an user with given user_id.
 
         :param user_id: Id of the user.
@@ -107,8 +107,7 @@ class BaseResource:
 
     @property
     def filter_allowed_fields(self):
-        """List of fields allowed in filtering and sorting.
-        """
+        """List of fields allowed in filtering and sorting."""
         schema = self.schema_filter
         allowed_fields = [child.name for child in schema.children]
         # Allow filtering by state
@@ -130,15 +129,7 @@ class BaseResource:
         :param request: pyramid request.
         :return:
         """
-        path_id = request.matchdict.get('id')
-        if path_id is None:
-            return
-
-        try:
-            uuid.UUID(path_id)
-        except ValueError as e:
-            request.errors.add('path', 'id',
-                               'The id informed is not 16 byte uuid valid.')
+        validate_id(request)
 
     def _run_validators(self, request):
         """Run all validators for the current http method.
@@ -183,11 +174,15 @@ class BaseResource:
         :param obj: sqlalchemy model obj instance
         """
         request = self.request
+        if 'Briefy-SyncBot' in request.headers.get('User-Agent', ''):
+            return
         method = method or request.method
         event_klass = self._default_notify_events.get(method)
         if event_klass:
             event = event_klass(obj, request)
             request.registry.notify(event)
+            # also execute the event to dispatch to sqs if needed
+            event()
 
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
@@ -357,13 +352,21 @@ class RESTService(BaseResource):
         """
         request = self.request
         payload = request.validated
-        session = self.session
         model = self.model
+
+        # verify if object with same ID exists
+        obj_id = payload.get('id')
+        if obj_id:
+            obj_exists = model.get(obj_id)
+            if obj_exists:
+                self.raise_invalid('body', 'id', 'Duplicate object UUID: {id}'.format(id=obj_id))
+
+        session = self.session
         obj = model(**payload)
         obj = self.attach_request(obj)
         session.add(obj)
-        self.notify_obj_event(obj, 'POST')
         session.flush()
+        self.notify_obj_event(obj, 'POST')
         return obj
 
     @view(validators='_run_validators', permission='list')
@@ -401,8 +404,8 @@ class RESTService(BaseResource):
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
         obj.update(self.request.validated)
-        self.notify_obj_event(obj, 'PUT')
         self.session.flush()
+        self.notify_obj_event(obj, 'PUT')
         return obj
 
     @view(permission='delete')
@@ -443,6 +446,7 @@ class WorkflowAwareResource(BaseResource):
 
         :returns: Newly created instance
         """
+        request = self.request
         transition = self.request.validated['transition']
         message = self.request.validated.get('message', '')
         workflow = self.workflow
@@ -452,10 +456,19 @@ class WorkflowAwareResource(BaseResource):
             transition_method = getattr(workflow, transition, None)
             if isinstance(transition_method, AttachedTransition):
                 transition_method(message=message)
+
+                wf_event = events.WorkflowTranstionEvent(workflow.document,
+                                                         request,
+                                                         transition_method)
+                request.registry.notify(wf_event)
+                # also execute the event to dispatch to sqs if needed
+                wf_event()
+
                 response = {
                     'status': True,
                     'message': 'Transition executed: {id}'.format(id=transition)
                 }
+
                 return response
             else:
                 msg = 'Transition not found: {id}'.format(id=transition)

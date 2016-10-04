@@ -1,6 +1,6 @@
 from briefy.ws.resources import RESTService
 from briefy.ws.resources import events
-
+from pyramid.testing import DummyRequest
 from unittest.mock import Mock
 
 
@@ -28,17 +28,13 @@ class RequestRegistry(dict):
         self.notifications.append(event)
 
 
-class Request:
+class Request(DummyRequest):
     def __init__(self):
+        super().__init__()
         self.registry = RequestRegistry()
 
     validated = {}
-
     matchdict = Mock()
-
-
-class User:
-    groups = ()
 
 
 class Model:
@@ -53,18 +49,18 @@ class Model:
         return self
 
 
-def test_base_resource_triggers_get_events():
+def test_base_resource_triggers_get_events(login):
     r = Request()
-    u = User()
+    u = login
     b = RESTService(u, r)
 
     assert b.request is r
     assert b.context is u
 
 
-def test_base_resource_get():
+def test_base_resource_get(login):
     r = Request()
-    u = User()
+    u = login
     b = RESTService(u, r)
     b.model = Model()
 
@@ -72,9 +68,9 @@ def test_base_resource_get():
     assert isinstance(r.registry.notifications[0], events.ObjectLoadedEvent)
 
 
-def test_base_resource_post():
+def test_base_resource_post(login):
     r = Request()
-    u = User()
+    u = login
     b = RESTService(u, r)
     b.model = Model()
 
@@ -82,9 +78,9 @@ def test_base_resource_post():
     assert isinstance(r.registry.notifications[0], events.ObjectCreatedEvent)
 
 
-def test_base_resource_put():
+def test_base_resource_put(login):
     r = Request()
-    u = User()
+    u = login
     b = RESTService(u, r)
     b.model = Model()
 
@@ -94,9 +90,9 @@ def test_base_resource_put():
     assert isinstance(r.registry.notifications[1], events.ObjectUpdatedEvent)
 
 
-def test_base_resource_delete():
+def test_base_resource_delete(login):
     r = Request()
-    u = User()
+    u = login
     b = RESTService(u, r)
     b.model = Model()
 
