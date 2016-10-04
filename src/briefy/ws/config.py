@@ -1,4 +1,4 @@
-# config.py
+"""Configs for briefy.ws."""
 from prettyconf import config
 
 # JWT

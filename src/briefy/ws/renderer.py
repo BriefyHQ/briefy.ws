@@ -1,4 +1,4 @@
-"""Custom JSONRenderer"""
+"""Custom JSONRenderer."""
 from briefy.common.utils.transformers import to_serializable
 from pyramid.interfaces import IJSONAdapter
 from pyramid.renderers import JSON
@@ -12,7 +12,7 @@ class JSONRenderer(JSON):
     """JSON renderer that inject to_serializable as default for json or simplejson dumps call."""
 
     def _make_default(self, request):
-        """This function is not used anymore, just here to explicit it."""
+        """Make default function is not used anymore, just here to explicit it."""
         def default(obj):
             if hasattr(obj, '__json__'):
                 return obj.__json__(request)
@@ -26,9 +26,10 @@ class JSONRenderer(JSON):
         return default
 
     def __call__(self, info):
-        """ Returns a plain JSON-encoded string with content-type
-        ``application/json``. The content-type may be overridden by
-        setting ``request.response.content_type``."""
+        """Return a plain JSON-encoded string with content-type ``application/json``.
+
+        The content-type may be overridden by setting ``request.response.content_type``.
+        """
         def _render(value, system):
             request = system.get('request')
             if request is not None:

@@ -12,7 +12,7 @@ __base_admin_acl__ = [
 
 
 class BaseFactory(object):
-    """Base Factory that computes acl"""
+    """Base Factory that computes acl."""
 
     model = None
 
@@ -26,6 +26,7 @@ class BaseFactory(object):
     @property
     def __base_acl__(self) -> list:
         """Hook to be use by subclasses to define default ACLs in context.
+
         :return: list of ACLs
         :rtype: list
         """
@@ -33,7 +34,8 @@ class BaseFactory(object):
 
     @property
     def __acl__(self) -> list:
-        """ACL for a factory
+        """ACL for a factory.
+
         :return: list of tuples containing the acl
         :rtype: list
         """

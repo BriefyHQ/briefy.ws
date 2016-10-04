@@ -4,13 +4,12 @@ from briefy.common.event import IDataEvent
 from briefy.ws import logger
 from zope.interface import implementer
 
-import json
-
 
 class BaseResourceObjectEvent:
     """Base class for object events: load and delete."""
 
     def __init__(self, obj, request, **kwargs):
+        """Custom init to call parent BaseEvent if it exist."""
         self.request = request
         self.obj = obj
         try:
@@ -50,6 +49,7 @@ class ResourceObjectEvent(BaseResourceObjectEvent, BaseEvent):
     logger = logger
 
     def __init__(self, obj, request):
+        """Custom init to call parent BaseEvent if it exist."""
         user = getattr(request, 'user', None)
         if user:
             user_id = user.id
@@ -83,12 +83,14 @@ class WorkflowTranstionEvent(BaseEvent):
 
     @property
     def event_name(self):
+        """Automatic generate event name from model class name and transation name."""
         model_name = self.obj.__class__.__name__.lower()
         transition_name = self.transition.name
         name = '{model_name}.workflow.{transition_name}'
         return name.format(model_name=model_name, transition_name=transition_name)
 
     def __init__(self, obj, request, transition):
+        """Custom init to call parent BaseEvent if it exist."""
         self.transition = transition
         self.request = request
         self.obj = obj

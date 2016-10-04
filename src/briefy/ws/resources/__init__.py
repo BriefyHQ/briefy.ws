@@ -19,7 +19,6 @@ from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
 import colander
 import sqlalchemy as sa
-import uuid
 
 
 class BaseResource:
@@ -49,7 +48,7 @@ class BaseResource:
 
     @property
     def schema(self):
-        """Returns the schema to validate this resource."""
+        """Return the schema to validate this resource."""
         method = self.request.method
         colander_schema = getattr(
             self,
@@ -59,7 +58,7 @@ class BaseResource:
         schema = CorniceSchema.from_colander(colander_schema)
         return schema
 
-    def get_user_info(self, user_id:str) -> dict:
+    def get_user_info(self, user_id: str) -> dict:
         """Get public information about an user with given user_id.
 
         :param user_id: Id of the user.
@@ -108,8 +107,7 @@ class BaseResource:
 
     @property
     def filter_allowed_fields(self):
-        """List of fields allowed in filtering and sorting.
-        """
+        """List of fields allowed in filtering and sorting."""
         schema = self.schema_filter
         allowed_fields = [child.name for child in schema.children]
         # Allow filtering by state

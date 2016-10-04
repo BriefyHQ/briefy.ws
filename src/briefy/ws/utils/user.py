@@ -63,7 +63,7 @@ def get_public_user_info(user_id: str) -> dict:
 
 
 def add_user_info_to_state_history(state_history):
-    """Receives object state history and add user information.
+    """Receive object state history and add user information.
 
     :param state_history: list of workflow state history.
     """

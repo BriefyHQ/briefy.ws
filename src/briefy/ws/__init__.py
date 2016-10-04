@@ -31,7 +31,6 @@ def expandvars_dict(settings):
 
 def includeme(config):
     """Configuration to be included by other services."""
-
     # Setup cornice.
     config.include("cornice")
 

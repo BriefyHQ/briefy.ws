@@ -16,6 +16,7 @@ lbheartbeat = Service(
 @lbheartbeat.get(permission=NO_PERMISSION_REQUIRED)
 def get_lbheartbeat(request):
     """Return successful healthy response.
+
     If the load-balancer tries to access this URL and fails, this means the
     Web head is not operational and should be dropped.
     """

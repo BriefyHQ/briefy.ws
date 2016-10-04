@@ -21,6 +21,7 @@ class COMPARISON(Enum):
 
     This is used to convert filtering params, in requests, to proper SQLAlchemy methods.
     """
+
     LT = 'lt'
     MIN = 'ge'
     MAX = 'le'
