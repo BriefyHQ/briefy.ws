@@ -3,8 +3,8 @@ Jinja2==2.8
 Sphinx==1.4.4
 alabaster==0.7.7
 coverage==4.1
-flake8==3.0.4
-flake8-docstrings==1.0.2
+flake8
+flake8-docstrings
 pydocstyle==1.0.0
 httmock==1.2.5
 pyramid-debugtoolbar==2.4.2

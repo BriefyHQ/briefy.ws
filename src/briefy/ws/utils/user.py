@@ -28,12 +28,15 @@ def _get_user_info_from_service(user_id: str) -> dict:
             headers=headers
         )
     except ConnectionError as exc:
-        logger.info('Failure connecting to internal user service. Exception: {exc}'.format(exc=exc))
+        logger.warn('Failure connecting to internal user service. Exception: {exc}'.format(exc=exc))
         savepoint.rollback()
     else:
         if resp.status_code == 200:
             raw_data = resp.json()
             data = raw_data['data'] if 'data' in raw_data else data
+        else:
+            msg = 'Getting user info from internal services fail. Status code: {status_code}.'
+            logger.info(msg.format(status_code=resp.status_code))
     return data
 
 
