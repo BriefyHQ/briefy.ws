@@ -354,6 +354,12 @@ class RESTService(BaseResource):
         """
         request = self.request
         payload = request.validated
+        # verify if object with same ID exists
+        obj_id = payload.get('id')
+        if obj_id:
+            exists_obj = self.get_one(obj_id)
+            if exists_obj:
+                self.raise_invalid('body', 'id', 'Duplicate object UUID: {id}'.format(id=obj_id))
         session = self.session
         model = self.model
         obj = model(**payload)
