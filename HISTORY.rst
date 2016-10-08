@@ -40,6 +40,7 @@ History
 * BODY-47: Add sqlalchemy listener events to inject request on model creation and load. (rudaporto)
 * New function to update state_history actor field with user map data. (rudaporto)
 * Fix workflow transition to not crash with empty message on body. (rudaporto)
+* BODY-62: Add pagination to resources. (ericof)
 
 
 0.1.0 (internal release)
