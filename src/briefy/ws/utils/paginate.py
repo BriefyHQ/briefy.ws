@@ -217,9 +217,11 @@ class Page(list):
 
     def __call__(self) -> dict:
         """Return a dictionary with page data, pagination info."""
+        page_info = self.page_info()
         response = {
             'data': self.items,
-            'pagination': self.page_info(),
+            'pagination': page_info,
+            'total': page_info['total']
         }
         return response
 

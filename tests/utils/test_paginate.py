@@ -118,6 +118,7 @@ def test_page_call():
     assert resp['pagination']['previous_page'] is None
     assert resp['pagination']['next_page'] == 2
     assert resp['pagination']['total'] == 100
+    assert resp['total'] == 100
     assert 1 in resp['data']
     assert 100 not in resp['data']
 
