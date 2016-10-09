@@ -27,6 +27,7 @@ class BaseResource:
 
     model = None
     friendly_name = ''
+    items_per_page = 25
     default_order_by = 'updated_at'
     default_order_direction = 1
 
@@ -298,6 +299,8 @@ class BaseResource:
 
     def paginate(self, query, query_params: dict=None):
         """Pagination."""
+        if not 'items_per_page' in query_params:
+            query_params['items_per_page'] = self.items_per_page
         params = paginate.extract_pagination_from_query_params(query_params)
         params['collection'] = query
         pagination = paginate.SQLPage(**params)
