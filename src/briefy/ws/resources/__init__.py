@@ -186,11 +186,22 @@ class BaseResource:
             # also execute the event to dispatch to sqs if needed
             event()
 
+    def apply_security(self, query):
+        """Filter objects this user is allowed to see.
+
+        :param query: Query object.
+        :return: Query object with filter applied.
+        """
+        user = self.request.user
+        model = self.model
+        query = query.filter(model._can_list(user))
+        return query
+
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
 
         :param id: Id for the object
-        :return: Category
+        :return: Object
         """
         model = self.model
         query = self._get_base_query()
@@ -216,6 +227,9 @@ class BaseResource:
 
         # Apply filters
         query = self.filter_query(query, query_params)
+
+        # Apply security
+        query = self.apply_security(query)
 
         # Apply sorting
         query = self.sort_query(query, query_params)
@@ -299,7 +313,7 @@ class BaseResource:
 
     def paginate(self, query, query_params: dict=None):
         """Pagination."""
-        if not 'items_per_page' in query_params:
+        if 'items_per_page' not in query_params:
             query_params['items_per_page'] = str(self.items_per_page)
         params = paginate.extract_pagination_from_query_params(query_params)
         params['collection'] = query
