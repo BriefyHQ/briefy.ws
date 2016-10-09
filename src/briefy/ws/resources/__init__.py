@@ -8,6 +8,7 @@ from briefy.ws.resources import events
 from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
+from briefy.ws.utils import paginate
 from briefy.ws.utils import user
 from colanderalchemy import SQLAlchemySchemaNode
 from cornice.schemas import CorniceSchema
@@ -217,17 +218,15 @@ class BaseResource:
 
         # Apply sorting
         query = self.sort_query(query, query_params)
-
-        total = query.count()
-        records = [self.attach_request(record) for record in query.all()]
+        pagination = self.paginate(query, query_params)
+        data = pagination['data']
+        records = [self.attach_request(record) for record in data]
+        pagination['data'] = records
 
         for record in records:
             self.notify_obj_event(record, 'GET')
 
-        return {
-            'total': total,
-            'data': records
-        }
+        return pagination
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
@@ -296,6 +295,13 @@ class BaseResource:
                 func = sa.desc
             query = query.order_by(func(column))
         return query
+
+    def paginate(self, query, query_params: dict=None):
+        """Pagination."""
+        params = paginate.extract_pagination_from_query_params(query_params)
+        params['collection'] = query
+        pagination = paginate.SQLPage(**params)
+        return pagination()
 
 
 class RESTService(BaseResource):
@@ -383,13 +389,12 @@ class RESTService(BaseResource):
         :returns: Payload with total records and list of objects
         """
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
-        collection = records['data']
-        return {
-            'total': records['total'],
-            'data': collection,
-        }
+        pagination = self.get_records()
+        total = pagination['total']
+        headers['Total-Records'] = '{total}'.format(total=total)
+        # Force in here to use the listing serialization.
+        pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
+        return pagination
 
     @view(validators='_run_validators', permission='view')
     def get(self):
