@@ -49,6 +49,7 @@ class Page(list):
     last_item
         Index of last item on the current page
     """
+
     def __init__(
             self,
             collection,
@@ -98,7 +99,7 @@ class Page(list):
         # The self.page is the number of the current page.
         # The first page has the number 1!
         try:
-            self.page = int(page) # make it int() if we get it as a string
+            self.page = int(page)  # make it int() if we get it as a string
         except (ValueError, TypeError):
             self.page = 1
         # normally page should be always at least 1 but the original maintainer
@@ -225,18 +226,31 @@ class Page(list):
         }
         return response
 
-class SqlalchemyOrmWrapper:
+
+class SQLOrmWrapper:
     """Wrapper class to access elements of an SQLAlchemy ORM query result."""
 
     def __init__(self, obj):
+        """Initialize SQLOrmWrapper.
+
+        :param obj: SQLAlchemy query.
+        """
         self.obj = obj
 
-    def __getitem__(self, range):
+    def __getitem__(self, range: slice):
+        """Get item.
+
+        :return: Number of objects.
+        """
         if not isinstance(range, slice):
             raise Exception("__getitem__ without slicing not supported")
         return self.obj[range]
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Count number of objects for the query.
+
+        :return: Number of objects.
+        """
         return self.obj.count()
 
 
@@ -244,17 +258,28 @@ class SQLPage(Page):
     """A pagination page that deals with SQLAlchemy ORM objects.
 
     See the documentation on Page for general information on how to work
-    with instances of this class."""
+    with instances of this class.
+    """
 
     def __init__(self, *args, **kwargs):
+        """Initialize SQLPage.
+
+        :param args: Arguments for pagination.
+        :param kwargs: Keyword arguments for pagination.
+        """
         super().__init__(
             *args,
-            wrapper_class=SqlalchemyOrmWrapper,
+            wrapper_class=SQLOrmWrapper,
             **kwargs
         )
 
 
 def sql_wrapper_factory(db_session=None):
+    """Wrapper for select.
+
+    :param db_session: SQLAlchemy database session.
+    :return: SQLSelectWrapper
+    """
     class SQLSelectWrapper:
         """Wrapper class to access elements of an SQLAlchemy SELECT query."""
 
@@ -263,7 +288,11 @@ def sql_wrapper_factory(db_session=None):
             self.obj = obj
             self.db_session = db_session
 
-        def __getitem__(self, range):
+        def __getitem__(self, range: slice):
+            """Get item.
+
+            :return: Number of objects.
+            """
             if not isinstance(range, slice):
                 raise Exception("__getitem__ without slicing not supported")
             # value for offset
@@ -272,7 +301,11 @@ def sql_wrapper_factory(db_session=None):
             select = self.obj.limit(limit).offset(offset_v)
             return self.db_session.execute(select).fetchall()
 
-        def __len__(self):
+        def __len__(self) -> int:
+            """Count number of objects for the query.
+
+            :return: Number of objects.
+            """
             return self.db_session.execute(self.obj.count()).scalar()
 
     return SQLSelectWrapper
@@ -282,10 +315,11 @@ class SQLSelectPage(Page):
     """A pagination page that deals with SQLAlchemy Select objects.
 
     See the documentation on Page for general information on how to work
-    with instances of this class."""
+    with instances of this class.
+    """
 
     def __init__(self, db_session, *args, **kwargs):
-        """sqlalchemy_connection: SQLAlchemy connection object"""
+        """sqlalchemy_connection: SQLAlchemy connection object."""
         wrapper = sql_wrapper_factory(db_session)
         super().__init__(
             *args,

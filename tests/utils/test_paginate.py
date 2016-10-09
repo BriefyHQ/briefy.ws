@@ -6,7 +6,7 @@ def test_page_default_values():
     """Test paginate.Page default values."""
     func = paginate.Page
 
-    data = range(0,100)
+    data = range(0, 100)
 
     page = func(data)
 
@@ -21,7 +21,7 @@ def test_page_pagination_second_page():
     """Test paginate.Page second page."""
     func = paginate.Page
 
-    data = range(0,100)
+    data = range(0, 100)
 
     # Second page
     page = func(data, page=2)
@@ -41,6 +41,7 @@ def test_page_pagination_last_page():
     assert page.page == 5
     assert page.previous_page == 4
     assert page.next_page is None
+
 
 def test_page_pagination_page_number_is_zero():
     """Test paginate.Page with page = 0."""
@@ -72,7 +73,7 @@ def test_page_number_items_per_page():
     """Test paginate.Page default values."""
     func = paginate.Page
 
-    data = range(0,100)
+    data = range(0, 100)
 
     page = func(data, items_per_page=50)
 
@@ -87,7 +88,7 @@ def test_page_page_info():
     """Test paginate.Page info"""
     func = paginate.Page
 
-    data = range(0,100)
+    data = range(0, 100)
 
     page = func(data)
     page_info = page.page_info()
@@ -105,7 +106,7 @@ def test_page_call():
     """Test paginate.Page execution"""
     func = paginate.Page
 
-    data = range(0,100)
+    data = range(0, 100)
 
     page = func(data)
 
