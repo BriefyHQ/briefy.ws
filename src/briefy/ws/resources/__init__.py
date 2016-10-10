@@ -313,8 +313,8 @@ class BaseResource:
 
     def paginate(self, query, query_params: dict=None):
         """Pagination."""
-        if 'items_per_page' not in query_params:
-            query_params['items_per_page'] = str(self.items_per_page)
+        if '_items_per_page' not in query_params:
+            query_params['_items_per_page'] = str(self.items_per_page)
         params = paginate.extract_pagination_from_query_params(query_params)
         params['collection'] = query
         pagination = paginate.SQLPage(**params)
