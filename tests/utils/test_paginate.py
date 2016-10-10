@@ -139,8 +139,8 @@ def test_extract_pagination_from_query_params_invalid():
     """Test paginate.extract_pagination_from_query_params with invalid query_params."""
     func = paginate.extract_pagination_from_query_params
     query_params = {
-        'page': 'page 1',
-        'items_per_page': -1
+        '_page': 'page 1',
+        '_items_per_page': -1
     }
 
     params = func(query_params)
@@ -153,8 +153,8 @@ def test_extract_pagination_from_query_params():
     """Test paginate.extract_pagination_from_query_params with valid query_params."""
     func = paginate.extract_pagination_from_query_params
     query_params = {
-        'page': '2',
-        'items_per_page': 50
+        '_page': '2',
+        '_items_per_page': 50
     }
 
     params = func(query_params)
