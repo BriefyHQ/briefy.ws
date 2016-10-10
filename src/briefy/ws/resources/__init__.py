@@ -8,6 +8,7 @@ from briefy.ws.resources import events
 from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
+from briefy.ws.utils import paginate
 from briefy.ws.utils import user
 from colanderalchemy import SQLAlchemySchemaNode
 from cornice.schemas import CorniceSchema
@@ -26,6 +27,7 @@ class BaseResource:
 
     model = None
     friendly_name = ''
+    items_per_page = 25
     default_order_by = 'updated_at'
     default_order_direction = 1
 
@@ -184,11 +186,22 @@ class BaseResource:
             # also execute the event to dispatch to sqs if needed
             event()
 
+    def apply_security(self, query):
+        """Filter objects this user is allowed to see.
+
+        :param query: Query object.
+        :return: Query object with filter applied.
+        """
+        user = self.request.user
+        model = self.model
+        query = query.filter(model._can_list(user))
+        return query
+
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
 
         :param id: Id for the object
-        :return: Category
+        :return: Object
         """
         model = self.model
         query = self._get_base_query()
@@ -215,19 +228,20 @@ class BaseResource:
         # Apply filters
         query = self.filter_query(query, query_params)
 
+        # Apply security
+        query = self.apply_security(query)
+
         # Apply sorting
         query = self.sort_query(query, query_params)
-
-        total = query.count()
-        records = [self.attach_request(record) for record in query.all()]
+        pagination = self.paginate(query, query_params)
+        data = pagination['data']
+        records = [self.attach_request(record) for record in data]
+        pagination['data'] = records
 
         for record in records:
             self.notify_obj_event(record, 'GET')
 
-        return {
-            'total': total,
-            'data': records
-        }
+        return pagination
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
@@ -296,6 +310,15 @@ class BaseResource:
                 func = sa.desc
             query = query.order_by(func(column))
         return query
+
+    def paginate(self, query, query_params: dict=None):
+        """Pagination."""
+        if '_items_per_page' not in query_params:
+            query_params['_items_per_page'] = str(self.items_per_page)
+        params = paginate.extract_pagination_from_query_params(query_params)
+        params['collection'] = query
+        pagination = paginate.SQLPage(**params)
+        return pagination()
 
 
 class RESTService(BaseResource):
@@ -383,13 +406,12 @@ class RESTService(BaseResource):
         :returns: Payload with total records and list of objects
         """
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
-        collection = records['data']
-        return {
-            'total': records['total'],
-            'data': collection,
-        }
+        pagination = self.get_records()
+        total = pagination['total']
+        headers['Total-Records'] = '{total}'.format(total=total)
+        # Force in here to use the listing serialization.
+        pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
+        return pagination
 
     @view(validators='_run_validators', permission='view')
     def get(self):
