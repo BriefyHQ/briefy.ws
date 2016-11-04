@@ -5,6 +5,7 @@ History
 1.1.2 (Unreleased)
 ------------------
     * BODY-62: Implement Pagination on BaseResource (ericof).
+    * BODY-64: Add like filter. (ericof)
 
 1.1.1 (2016-10-04)
 ------------------
@@ -12,7 +13,6 @@ History
     * Move validate_id function to validator module and fix tests. (rudaporto)
     * BODY-58: Avoid transaction rollback when connection to internal user service fails. (rudaporto)
     * When id field is in the collection_post body, check if alredy exists a registry with same id. (rudaporto)
-
 
 1.1.0 (2016-09-27)
 ------------------
