@@ -30,6 +30,7 @@ class COMPARISON(Enum):
     GT = 'gt'
     IN = 'in_'
     LIKE = 'like'
+    ILIKE = 'ilike'
     EXCLUDE = 'notin_'
 
 
@@ -66,7 +67,7 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
             )
             continue
 
-        m = re.match(r'^(min|max|not|lt|gt|in|exclude|like)_(\w+)$', param)
+        m = re.match(r'^(min|max|not|lt|gt|in|exclude|like|ilike)_(\w+)$', param)
         if m:
             keyword, field = m.groups()
             operator = getattr(COMPARISON, keyword.upper())

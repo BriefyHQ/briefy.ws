@@ -131,6 +131,18 @@ class TestFilterFromQueryParams:
         assert result[0].operator.value == 'like'
         assert result[0].value == '%36%'
 
+    def test_one_field_ilike(self):
+        """Passing id, value '36'."""
+        query_params = {'ilike_id': '36'}
+        func = filter.create_filter_from_query_params
+        result = func(query_params=query_params, allowed_fields=self.allowed_fields)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0].field == 'id'
+        assert result[0].operator.value == 'ilike'
+        assert result[0].value == '%36%'
+
     def test_one_field_in(self):
         """Passing id, value in '360'."""
         query_params = {'in_id': '360'}
