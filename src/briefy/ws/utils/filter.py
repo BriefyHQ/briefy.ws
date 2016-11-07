@@ -84,7 +84,7 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
         value = data.native_value(param_value, field)
         if operator in (COMPARISON.IN, COMPARISON.EXCLUDE):
             value = set([data.native_value(v, field) for v in param_value.split(',')])
-        elif operator in (COMPARISON.LIKE, ):
+        elif operator in (COMPARISON.LIKE, COMPARISON.ILIKE, ):
             value = '%{value}%'.format(value=value.replace('%', ''))
         filters.append(Filter(field, value, operator))
     return filters
