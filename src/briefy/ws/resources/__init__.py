@@ -217,10 +217,10 @@ class BaseResource:
         self.notify_obj_event(obj, 'GET')
         return self.attach_request(obj)
 
-    def get_records(self):
-        """Get all records for this resource and return a dictionary.
+    def _get_records_query(self):
+        """Return a base query for records.
 
-        :return: dict
+        :return: tuple
         """
         query_params = self.request.GET
         query = self._get_base_query()
@@ -233,6 +233,15 @@ class BaseResource:
 
         # Apply sorting
         query = self.sort_query(query, query_params)
+        return tuple(query, query_params)
+
+
+    def get_records(self):
+        """Get all records for this resource and return a dictionary.
+
+        :return: dict
+        """
+        query, query_params = self._get_records_query()
         pagination = self.paginate(query, query_params)
         data = pagination['data']
         records = [self.attach_request(record) for record in data]
@@ -242,6 +251,14 @@ class BaseResource:
             self.notify_obj_event(record, 'GET')
 
         return pagination
+
+    def count_records(self) -> int:
+        """Count records for a request.
+
+        :return: Count of records to be returned
+        """
+        query, query_params = self._get_records_query()
+        return query.count()
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
@@ -396,8 +413,8 @@ class RESTService(BaseResource):
     def collection_head(self):
         """Return the header with total objects for this request."""
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
+        total_records = self.count_records()
+        headers['Total-Records'] = '{total}'.format(total=total_records)
 
     @view(validators='_run_validators', permission='list')
     def collection_get(self):
