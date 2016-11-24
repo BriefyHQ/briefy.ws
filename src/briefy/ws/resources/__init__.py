@@ -233,7 +233,7 @@ class BaseResource:
 
         # Apply sorting
         query = self.sort_query(query, query_params)
-        return tuple(query, query_params)
+        return query, query_params
 
 
     def get_records(self):
