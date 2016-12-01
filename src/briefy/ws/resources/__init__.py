@@ -17,7 +17,6 @@ from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
-
 import colander
 import sqlalchemy as sa
 
@@ -30,6 +29,7 @@ class BaseResource:
     items_per_page = 25
     default_order_by = 'updated_at'
     default_order_direction = 1
+    filter_related_fields = []
 
     _default_notify_events = {}
 
@@ -114,6 +114,8 @@ class BaseResource:
         allowed_fields = [child.name for child in schema.children]
         # Allow filtering by state
         allowed_fields.append('state')
+        for field in self.filter_related_fields:
+            allowed_fields.append(field)
         return allowed_fields
 
     @property
@@ -235,7 +237,6 @@ class BaseResource:
         query = self.sort_query(query, query_params)
         return query, query_params
 
-
     def get_records(self):
         """Get all records for this resource and return a dictionary.
 
@@ -260,9 +261,24 @@ class BaseResource:
         query, query_params = self._get_records_query()
         return query.count()
 
+    def get_column_from_key(self, query, key):
+        """Get a column and join based on a key.
+
+        :return: A new query with a join with necessary,
+                 A column in the own model or from a related one
+        """
+        if '.' in key:
+            relationship_column_name, field = key.split('.')
+            query = query.join(relationship_column_name)
+            column = getattr(self.model, relationship_column_name, None)
+            column = getattr(column.property.mapper.c, field, None)
+        else:
+            column = getattr(self.model, key, None)
+
+        return query, column
+
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
-        model = self.model
         try:
             raw_filters = filter.create_filter_from_query_params(
                 query_params,
@@ -280,8 +296,7 @@ class BaseResource:
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
-
-            column = getattr(model, key, None)
+            query, column = self.get_column_from_key(query, key)
 
             if value == 'null':
                 value = None
@@ -297,12 +312,13 @@ class BaseResource:
                 self.raise_invalid(**error_details)
             else:
                 filt = attrs[0](value)
+
             query = query.filter(filt)
+
         return query
 
     def sort_query(self, query, query_params=None):
         """Apply request sorting to a query."""
-        model = self.model
         try:
             raw_sorting = filter.create_sorting_from_query_params(
                 query_params,
@@ -321,10 +337,10 @@ class BaseResource:
         for sorting in raw_sorting:
             key = sorting.field
             direction = sorting.direction
-            column = getattr(model, key, None)
             func = sa.asc
             if direction == -1:
                 func = sa.desc
+            query, column = self.get_column_from_key(query, key)
             query = query.order_by(func(column))
         return query
 
