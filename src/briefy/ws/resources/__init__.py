@@ -274,7 +274,6 @@ class BaseResource:
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
-        model = self.model
         try:
             raw_filters = filter.create_filter_from_query_params(
                 query_params,
@@ -315,7 +314,6 @@ class BaseResource:
 
     def sort_query(self, query, query_params=None):
         """Apply request sorting to a query."""
-        model = self.model
         try:
             raw_sorting = filter.create_sorting_from_query_params(
                 query_params,
