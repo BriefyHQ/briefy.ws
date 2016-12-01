@@ -67,7 +67,7 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
             )
             continue
 
-        m = re.match(r'^(min|max|not|lt|gt|in|exclude|like|ilike)_(\w+)$', param)
+        m = re.match(r'^(min|max|not|lt|gt|in|exclude|like|ilike)_([\.\w]+)$', param)
         if m:
             keyword, field = m.groups()
             operator = getattr(COMPARISON, keyword.upper())
@@ -107,7 +107,7 @@ def create_sorting_from_query_params(
     sorting = []
     for field in specified:
         field = field.strip()
-        m = re.match(r'^([\-+]?)(\w+)$', field)
+        m = re.match(r'^([\-+]?)([\.\w]+)$', field)
         if m:
             order, field = m.groups()
             if field not in allowed_fields:

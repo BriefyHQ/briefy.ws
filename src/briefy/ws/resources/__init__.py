@@ -17,7 +17,6 @@ from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
-
 import colander
 import sqlalchemy as sa
 
@@ -30,6 +29,7 @@ class BaseResource:
     items_per_page = 25
     default_order_by = 'updated_at'
     default_order_direction = 1
+    filter_related_fields = []
 
     _default_notify_events = {}
 
@@ -114,6 +114,8 @@ class BaseResource:
         allowed_fields = [child.name for child in schema.children]
         # Allow filtering by state
         allowed_fields.append('state')
+        for field in self.filter_related_fields:
+            allowed_fields.append(field)
         return allowed_fields
 
     @property
@@ -281,7 +283,13 @@ class BaseResource:
             value = raw_filter.value
             op = raw_filter.operator.value
 
-            column = getattr(model, key, None)
+            if '.' in key:
+                relationship_column_name, field = key.split('.')
+                query = query.join(relationship_column_name)
+                column = getattr(model, relationship_column_name, None)
+                column = getattr(column.property.mapper.c, field, None)
+            else:
+                column = getattr(model, key, None)
 
             if value == 'null':
                 value = None
@@ -297,7 +305,9 @@ class BaseResource:
                 self.raise_invalid(**error_details)
             else:
                 filt = attrs[0](value)
+
             query = query.filter(filt)
+
         return query
 
     def sort_query(self, query, query_params=None):
@@ -321,10 +331,16 @@ class BaseResource:
         for sorting in raw_sorting:
             key = sorting.field
             direction = sorting.direction
-            column = getattr(model, key, None)
             func = sa.asc
             if direction == -1:
                 func = sa.desc
+            if '.' in key:
+                relationship_column_name, field = key.split('.')
+                query = query.join(relationship_column_name)
+                column = getattr(model, relationship_column_name, None)
+                column = getattr(column.property.mapper.c, field, None)
+            else:
+                column = getattr(model, key, None)
             query = query.order_by(func(column))
         return query
 
