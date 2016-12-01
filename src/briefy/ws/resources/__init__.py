@@ -237,7 +237,6 @@ class BaseResource:
         query = self.sort_query(query, query_params)
         return query, query_params
 
-
     def get_records(self):
         """Get all records for this resource and return a dictionary.
 
@@ -262,6 +261,17 @@ class BaseResource:
         query, query_params = self._get_records_query()
         return query.count()
 
+    def get_column_from_key(self, query, key):
+        if '.' in key:
+            relationship_column_name, field = key.split('.')
+            query = query.join(relationship_column_name)
+            column = getattr(self.model, relationship_column_name, None)
+            column = getattr(column.property.mapper.c, field, None)
+        else:
+            column = getattr(self.model, key, None)
+
+        return query, column
+
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
         model = self.model
@@ -282,14 +292,7 @@ class BaseResource:
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
-
-            if '.' in key:
-                relationship_column_name, field = key.split('.')
-                query = query.join(relationship_column_name)
-                column = getattr(model, relationship_column_name, None)
-                column = getattr(column.property.mapper.c, field, None)
-            else:
-                column = getattr(model, key, None)
+            query, column = self.get_column_from_key(query, key)
 
             if value == 'null':
                 value = None
@@ -334,13 +337,7 @@ class BaseResource:
             func = sa.asc
             if direction == -1:
                 func = sa.desc
-            if '.' in key:
-                relationship_column_name, field = key.split('.')
-                query = query.join(relationship_column_name)
-                column = getattr(model, relationship_column_name, None)
-                column = getattr(column.property.mapper.c, field, None)
-            else:
-                column = getattr(model, key, None)
+            query, column = self.get_column_from_key(query, key)
             query = query.order_by(func(column))
         return query
 
