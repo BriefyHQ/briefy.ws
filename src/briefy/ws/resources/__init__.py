@@ -262,6 +262,11 @@ class BaseResource:
         return query.count()
 
     def get_column_from_key(self, query, key):
+        """Get a column and join based on a key.
+
+        :return: A new query with a join with necessary,
+                 A column in the own model or from a related one
+        """
         if '.' in key:
             relationship_column_name, field = key.split('.')
             query = query.join(relationship_column_name)
