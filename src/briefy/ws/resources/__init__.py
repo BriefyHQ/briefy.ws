@@ -410,7 +410,6 @@ class RESTService(BaseResource):
         :returns: Newly created instance
         """
         request = self.request
-        colander_body_validator(request)
         payload = request.validated
         model = self.model
 
