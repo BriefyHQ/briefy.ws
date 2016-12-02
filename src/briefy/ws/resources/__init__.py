@@ -164,7 +164,7 @@ class BaseResource:
         """
         request = self.request
         request.errors.add(location, name, description, **kwargs)
-        raise json_error(request.errors)
+        raise json_error(request)
 
     def attach_request(self, obj):
         """Attach current request in one model object instance.
