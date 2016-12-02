@@ -14,7 +14,7 @@ requires = [
     'briefy.common',
     'colander',
     'colanderalchemy',
-    'cornice<2.0.0',
+    'cornice==2.2.0',
     'prettyconf',
     'pyramid',
     'pyramid_jwt',
