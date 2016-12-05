@@ -11,7 +11,7 @@ from briefy.ws.utils import filter
 from briefy.ws.utils import paginate
 from briefy.ws.utils import user
 from colanderalchemy import SQLAlchemySchemaNode
-from cornice.schemas import CorniceSchema
+from cornice.validators import colander_body_validator
 from cornice.util import json_error
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
@@ -57,8 +57,7 @@ class BaseResource:
             'schema_{method}'.format(method=method.lower()),
             self.schema_read
         )
-        schema = CorniceSchema.from_colander(colander_schema)
-        return schema
+        return colander_schema
 
     def get_user_info(self, user_id: str) -> dict:
         """Get public information about an user with given user_id.
@@ -135,7 +134,7 @@ class BaseResource:
         """
         validate_id(request)
 
-    def _run_validators(self, request):
+    def _run_validators(self, request, **kwargs):
         """Run all validators for the current http method.
 
         :param request: request object
@@ -146,11 +145,15 @@ class BaseResource:
         validators = self.validators.get(self.request.method, [])
         for item in validators:
             try:
-                validator = getattr(self, item)
+                if type(item) == str:
+                    validator = getattr(self, item)
+                else:
+                    validator = item
             except AttributeError as e:
                 raise AttributeError('Validator "{name}" specified not found.'.format(name=item))
             else:
                 validator(request)
+        colander_body_validator(request, self.schema)
 
     def raise_invalid(self, location='body', name=None, description=None, **kwargs):
         """Raise a 400 error.
@@ -161,7 +164,7 @@ class BaseResource:
         """
         request = self.request
         request.errors.add(location, name, description, **kwargs)
-        raise json_error(request.errors)
+        raise json_error(request)
 
     def attach_request(self, obj):
         """Attach current request in one model object instance.
