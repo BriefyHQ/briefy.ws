@@ -8,14 +8,14 @@ from briefy.ws.resources import events
 from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
+from briefy.ws.utils import paginate
 from briefy.ws.utils import user
 from colanderalchemy import SQLAlchemySchemaNode
-from cornice.schemas import CorniceSchema
+from cornice.validators import colander_body_validator
 from cornice.util import json_error
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
-
 
 import colander
 import sqlalchemy as sa
@@ -26,8 +26,10 @@ class BaseResource:
 
     model = None
     friendly_name = ''
+    items_per_page = 25
     default_order_by = 'updated_at'
     default_order_direction = 1
+    filter_related_fields = []
 
     _default_notify_events = {}
 
@@ -55,8 +57,7 @@ class BaseResource:
             'schema_{method}'.format(method=method.lower()),
             self.schema_read
         )
-        schema = CorniceSchema.from_colander(colander_schema)
-        return schema
+        return colander_schema
 
     def get_user_info(self, user_id: str) -> dict:
         """Get public information about an user with given user_id.
@@ -112,6 +113,8 @@ class BaseResource:
         allowed_fields = [child.name for child in schema.children]
         # Allow filtering by state
         allowed_fields.append('state')
+        for field in self.filter_related_fields:
+            allowed_fields.append(field)
         return allowed_fields
 
     @property
@@ -131,7 +134,7 @@ class BaseResource:
         """
         validate_id(request)
 
-    def _run_validators(self, request):
+    def _run_validators(self, request, **kwargs):
         """Run all validators for the current http method.
 
         :param request: request object
@@ -142,11 +145,15 @@ class BaseResource:
         validators = self.validators.get(self.request.method, [])
         for item in validators:
             try:
-                validator = getattr(self, item)
+                if type(item) == str:
+                    validator = getattr(self, item)
+                else:
+                    validator = item
             except AttributeError as e:
                 raise AttributeError('Validator "{name}" specified not found.'.format(name=item))
             else:
                 validator(request)
+        colander_body_validator(request, self.schema)
 
     def raise_invalid(self, location='body', name=None, description=None, **kwargs):
         """Raise a 400 error.
@@ -157,7 +164,7 @@ class BaseResource:
         """
         request = self.request
         request.errors.add(location, name, description, **kwargs)
-        raise json_error(request.errors)
+        raise json_error(request)
 
     def attach_request(self, obj):
         """Attach current request in one model object instance.
@@ -184,11 +191,22 @@ class BaseResource:
             # also execute the event to dispatch to sqs if needed
             event()
 
+    def apply_security(self, query):
+        """Filter objects this user is allowed to see.
+
+        :param query: Query object.
+        :return: Query object with filter applied.
+        """
+        user = self.request.user
+        model = self.model
+        query = query.filter(model._can_list(user))
+        return query
+
     def get_one(self, id):
         """Given an id, return an instance of the model object or raise a not found exception.
 
         :param id: Id for the object
-        :return: Category
+        :return: Object
         """
         model = self.model
         query = self._get_base_query()
@@ -204,10 +222,10 @@ class BaseResource:
         self.notify_obj_event(obj, 'GET')
         return self.attach_request(obj)
 
-    def get_records(self):
-        """Get all records for this resource and return a dictionary.
+    def _get_records_query(self):
+        """Return a base query for records.
 
-        :return: dict
+        :return: tuple
         """
         query_params = self.request.GET
         query = self._get_base_query()
@@ -215,23 +233,55 @@ class BaseResource:
         # Apply filters
         query = self.filter_query(query, query_params)
 
+        # Apply security
+        query = self.apply_security(query)
+
         # Apply sorting
         query = self.sort_query(query, query_params)
+        return query, query_params
 
-        total = query.count()
-        records = [self.attach_request(record) for record in query.all()]
+    def get_records(self):
+        """Get all records for this resource and return a dictionary.
+
+        :return: dict
+        """
+        query, query_params = self._get_records_query()
+        pagination = self.paginate(query, query_params)
+        data = pagination['data']
+        records = [self.attach_request(record) for record in data]
+        pagination['data'] = records
 
         for record in records:
             self.notify_obj_event(record, 'GET')
 
-        return {
-            'total': total,
-            'data': records
-        }
+        return pagination
+
+    def count_records(self) -> int:
+        """Count records for a request.
+
+        :return: Count of records to be returned
+        """
+        query, query_params = self._get_records_query()
+        return query.count()
+
+    def get_column_from_key(self, query, key):
+        """Get a column and join based on a key.
+
+        :return: A new query with a join with necessary,
+                 A column in the own model or from a related one
+        """
+        if '.' in key:
+            relationship_column_name, field = key.split('.')
+            query = query.join(relationship_column_name)
+            column = getattr(self.model, relationship_column_name, None)
+            column = getattr(column.property.mapper.c, field, None)
+        else:
+            column = getattr(self.model, key, None)
+
+        return query, column
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
-        model = self.model
         try:
             raw_filters = filter.create_filter_from_query_params(
                 query_params,
@@ -249,8 +299,7 @@ class BaseResource:
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
-
-            column = getattr(model, key, None)
+            query, column = self.get_column_from_key(query, key)
 
             if value == 'null':
                 value = None
@@ -266,12 +315,13 @@ class BaseResource:
                 self.raise_invalid(**error_details)
             else:
                 filt = attrs[0](value)
+
             query = query.filter(filt)
+
         return query
 
     def sort_query(self, query, query_params=None):
         """Apply request sorting to a query."""
-        model = self.model
         try:
             raw_sorting = filter.create_sorting_from_query_params(
                 query_params,
@@ -290,12 +340,21 @@ class BaseResource:
         for sorting in raw_sorting:
             key = sorting.field
             direction = sorting.direction
-            column = getattr(model, key, None)
             func = sa.asc
             if direction == -1:
                 func = sa.desc
+            query, column = self.get_column_from_key(query, key)
             query = query.order_by(func(column))
         return query
+
+    def paginate(self, query, query_params: dict=None):
+        """Pagination."""
+        if '_items_per_page' not in query_params:
+            query_params['_items_per_page'] = str(self.items_per_page)
+        params = paginate.extract_pagination_from_query_params(query_params)
+        params['collection'] = query
+        pagination = paginate.SQLPage(**params)
+        return pagination()
 
 
 class RESTService(BaseResource):
@@ -373,8 +432,8 @@ class RESTService(BaseResource):
     def collection_head(self):
         """Return the header with total objects for this request."""
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
+        total_records = self.count_records()
+        headers['Total-Records'] = '{total}'.format(total=total_records)
 
     @view(validators='_run_validators', permission='list')
     def collection_get(self):
@@ -383,13 +442,12 @@ class RESTService(BaseResource):
         :returns: Payload with total records and list of objects
         """
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
-        collection = records['data']
-        return {
-            'total': records['total'],
-            'data': collection,
-        }
+        pagination = self.get_records()
+        total = pagination['total']
+        headers['Total-Records'] = '{total}'.format(total=total)
+        # Force in here to use the listing serialization.
+        pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
+        return pagination
 
     @view(validators='_run_validators', permission='view')
     def get(self):

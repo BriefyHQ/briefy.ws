@@ -53,7 +53,7 @@ def groupfinder(userid, request):
     return request.jwt_claims.get('groups', [])
 
 
-def validate_jwt_token(request):
+def validate_jwt_token(request, **kwargs):
     """Use pyramid JWT to validate if the user is authenticated."""
     user_id = request.authenticated_userid
     if user_id is None:
