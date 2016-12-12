@@ -21,3 +21,15 @@ after_success:
 - make docs
 notifications:
   slack: briefy:qxjOPwcrGEtVx3aCQBr812t9
+deploy:
+  provider: s3
+  access_key_id: AKIAJB5RBIXPYQ5EU2IA
+  secret_access_key:
+    secure: F8O4PJie5Ch2Rtfo22seoHz5N/unBRgFTpjsGn6S9B+ra+5P4xjaWFwA9HvFvoJidh3EsoGVh2nwm223Xu1c1pTxw6ElEaXruyX8GGYRpbzqt1hfhc6/ddMxnlywKLyo9YDOTX5yH3RbRFtzo2tHzsx2S/OqzPgzEAFnjtW7JEykORCRoqKNVoOFWHz4ZBQcUkYhvnxOm7NJzkIo90XpTeoAKup33GXJ5O4YMgbWbCgNyOXzzuW3owG6d8KWHggLyt81E/erBTICK0k40frv7ZnK0me/WcBAZ+pyGxoq8HeCKsHY6q0d5l5x8Uw+GeZ7U/GN7fkOuQXeT4zNPNh7fqUW9weYYgioMcIPpbnmvead6LnhAXw6+R+K0MOmsY03m9fGNuPHRQmPL7Q1aJrco5zeWxQPFizHeVnpr8/e89c+KVYkcImQmzzrtM7JWJbAkvjW3pQvR9a09CfFuISlJIccl/jCp9eFkXnzC3WgAM9F27041o2cBOmm8klwEbJj1LkaC7YRUf/fNZYlzKTkQscq1g0J3gWLoLZVXXkAvv+RBlwTM7KzdxE1ZC72h0bZ1Ob/ns1g0KWKn02M6eybmEvsMxFYX8ji2fITE83j27t85mhEKFTe55QwOnROPAGHMqD1jZ5393GDe7lz2J84YWoLZAS4FNMvKynfyRzKwmU=
+  bucket: briefy-dev-docs
+  local-dir: docs/_build/dirhtml/
+  upload-dir: briefy.ws
+  acl: public_read
+  on:
+    repo: BriefyHQ/briefy.ws
+    branch: develop
