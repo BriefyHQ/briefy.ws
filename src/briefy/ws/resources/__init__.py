@@ -16,6 +16,7 @@ from cornice.util import json_error
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
+from pyramid.security import has_permission
 
 import colander
 import sqlalchemy as sa
@@ -199,7 +200,10 @@ class BaseResource:
         """
         user = self.request.user
         model = self.model
-        query = query.filter(model._can_list(user))
+        allowed = has_permission('list', self.context, self.request)
+        global_list = user.id in allowed.principals
+        can_list = global_list or model._can_list(user)
+        query = query.filter(can_list)
         return query
 
     def get_one(self, id):
