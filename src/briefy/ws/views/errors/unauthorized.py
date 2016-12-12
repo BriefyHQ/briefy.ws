@@ -1,4 +1,5 @@
-"""Views for briefy.ws."""
+"""HTTP Error 403 view for Briefy APIs using briefy.ws."""
+from pyramid.request import Request
 from pyramid.response import Response
 from pyramid.view import view_config
 
@@ -7,15 +8,12 @@ import pyramid.httpexceptions as http_exc
 
 
 @view_config(context=http_exc.HTTPForbidden)
-def forbidden(exc, request):
+def forbidden(exc: http_exc.HTTPForbidden, request: Request) -> Response:
     """View overriding default 403 error page.
 
     :param exc: A 403 exception
-    :type exc: :class:`pyramid.httpexceptions.HTTPForbidden`
     :param request: A request object
-    :type request: request
     :returns: A response object with a application/json formatted body
-    :rtype: :class:`pyramid.response.Response`
     """
     body = {}
     body.update({

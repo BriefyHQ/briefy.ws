@@ -7,6 +7,7 @@ History
     * BODY-62: Implement Pagination on BaseResource (ericof).
     * BODY-64: Add like filter. (ericof)
     * BODY-88: Improve apply_secutiry to use context permissions (rudaporto).
+    * BODY-89: Improve logging. (ericof).
 
 1.1.1 (2016-10-04)
 ------------------

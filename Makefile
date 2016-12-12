@@ -96,7 +96,7 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 
 docs_server: docs
-	@cd $(BUILDDIR)/dirhtml; python3 -m SimpleHTTPServer 8000
+	@cd $(BUILDDIR)/dirhtml; python3 -m http.server 8000
 
 release: clean ## package and upload a release
 	python setup.py sdist upload
