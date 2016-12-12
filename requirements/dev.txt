@@ -12,6 +12,7 @@ pytest==3.0.2
 pytest-cov==2.3.1
 pytz==2015.7
 snowballstemmer==1.2.1
+sphinx-autodoc-typehints
 sphinx-bootstrap-theme==0.4.8
 sphinx-rtd-theme==0.1.9
 tox==2.3.1
