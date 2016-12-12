@@ -30,6 +30,7 @@ deploy:
   local-dir: docs/_build/dirhtml/
   upload-dir: briefy.ws
   acl: public_read
+  skip_cleanup: true
   on:
     repo: BriefyHQ/briefy.ws
     branch: develop
