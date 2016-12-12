@@ -9,6 +9,7 @@ from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from briefy.ws.utils import paginate
+from briefy.ws.utils import user
 from colanderalchemy import SQLAlchemySchemaNode
 from cornice.validators import colander_body_validator
 from cornice.util import json_error
