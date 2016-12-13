@@ -21,16 +21,13 @@ after_success:
 - make docs
 notifications:
   slack: briefy:qxjOPwcrGEtVx3aCQBr812t9
-deploy:
-  provider: s3
-  access_key_id: AKIAJB5RBIXPYQ5EU2IA
-  secret_access_key:
-    secure: F8O4PJie5Ch2Rtfo22seoHz5N/unBRgFTpjsGn6S9B+ra+5P4xjaWFwA9HvFvoJidh3EsoGVh2nwm223Xu1c1pTxw6ElEaXruyX8GGYRpbzqt1hfhc6/ddMxnlywKLyo9YDOTX5yH3RbRFtzo2tHzsx2S/OqzPgzEAFnjtW7JEykORCRoqKNVoOFWHz4ZBQcUkYhvnxOm7NJzkIo90XpTeoAKup33GXJ5O4YMgbWbCgNyOXzzuW3owG6d8KWHggLyt81E/erBTICK0k40frv7ZnK0me/WcBAZ+pyGxoq8HeCKsHY6q0d5l5x8Uw+GeZ7U/GN7fkOuQXeT4zNPNh7fqUW9weYYgioMcIPpbnmvead6LnhAXw6+R+K0MOmsY03m9fGNuPHRQmPL7Q1aJrco5zeWxQPFizHeVnpr8/e89c+KVYkcImQmzzrtM7JWJbAkvjW3pQvR9a09CfFuISlJIccl/jCp9eFkXnzC3WgAM9F27041o2cBOmm8klwEbJj1LkaC7YRUf/fNZYlzKTkQscq1g0J3gWLoLZVXXkAvv+RBlwTM7KzdxE1ZC72h0bZ1Ob/ns1g0KWKn02M6eybmEvsMxFYX8ji2fITE83j27t85mhEKFTe55QwOnROPAGHMqD1jZ5393GDe7lz2J84YWoLZAS4FNMvKynfyRzKwmU=
-  bucket: briefy-dev-docs
-  local-dir: docs/_build/dirhtml/
-  upload-dir: briefy.ws
-  acl: public_read
-  skip_cleanup: true
-  on:
-    repo: BriefyHQ/briefy.ws
-    branch: develop
+addons:
+  artifacts:
+    key:
+      secure: FmMU1+yRcdFiQlhY1C/QqgwA+/0UEm8tnXcHrfuXeg3WH+XgRcmKVvc8DLBgDukvGEjch1ujTm7OA7EVd6DYt1v6MBvP7QONtb2hYlGmR1htzXNX2tH0Xaw4/STkDYLM9N3hgamIu4tcpFEPgLF7OvhelEiAxPKTo1qdEbPOs3E40GABS32bDmhi8jCRCLesrsSfGbfJs4wHnuBp0YOzZG3L2SFQnUq9rPqdDYTyQgGNFIULOY4snGTznHwOLyI67LxkVWMZux8zVYt0ZPGZnXX3SPQ8LoFFn6BsvZMkPEzdSiGcFCD1HVzCRZgk4rdAYznFZzDbkCeOapSBMUOuWLTk0w5FSRH4Rvr7rTiP64NSW02JkIcuGoS9ygA13dEkDm7p70dmpRCEA4Iag++o+Wik/39kwEXCc//O+m5gkluxzjq9AeoM26+2Hy+rY0oPW97NQ7bQwW0bs0uVHVtQxn1cHrhiwTjkYzW+3K4xegqS5qXrAnpNHOj+whwklNmIcPEcUFa8Jm5uWFoD2EtbTfyhNqFP7aFHg5juJPdFpPhViljBBFRhnD+ZfQ8AhHB+7Qs7FpOk64sCLh9lxgC4M95tChoh6qlFa2//DmWgvNol03IgkTfDebFFC7OaqwjmvkyDz/cRtpWGB3qfgaU2dtw+75P3gvQknq19xTm4NOQ=
+    secret:
+      secure: DPKAURP7y56YrdavAliRAZ9xlJYOJTenab1SRKlgDYiJCs9S38XryGFQYClxVMZVR0Sm39wltth/AKEa6WhYEHR3VtYY9wDWVweYLWjXWT3deIl+Do2cK3r8fRK8jay9hONJ111CWECtv23qqtCZVv3MG3B4aWIPOw43pld17OtzicE6PaPSqYzn8wYqWOEd0jhshSUB18PBBs6XtJrTPhYK0jhXFunliPN74kFSz/oFJIQkeofslh/goGxzYxHq500JGsVboAF4f13S6rlrct/zAlMfSi5CsUCzQRu3c0UguNNnrlJs0rMGbIHjXzCMgcd/oFV7Kfw0RK/sU7+RvvqAdBkGGy0eAUHqksdKLtqK8WjDkI+GzOZbkicILYbQrsK4MvsoCwQPdc39yVsznt0M1s1kEo1OF+5dr6DKrXLtUx1zt3YbU/t2ig3H4bfJOVI8FyzZRkcKJSjumJbfdhlsp8dxKyIlF8OtuMUB2M30LLYhlDdJ9L356U3fkAuQvcKplMccSMeuN4JlzRbPFzSrfcEz+9za4zQopZdaQNvjpaHUx/H+0h0ISgzor/41D/g+JzXZYtVcziRbGYsB4u/9nCQLFCTpjHV7PHoRCBge+IvjzQEky4ZxsE+nRP5tGtKp5lAeC6lhyGoD8kbhS0zx4YefyRwAe4N3bZLCleU=
+    bucket: briefy-dev-docs
+    target_paths: briefy.ws
+    paths:
+      - docs/_build/dirhtml/
