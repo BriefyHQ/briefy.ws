@@ -1,6 +1,42 @@
 """Data utilities for Briefy webservices."""
+from colanderalchemy import SQLAlchemySchemaNode
+from sqlalchemy.orm.properties import ColumnProperty
+
 import ast
 import colander
+
+
+class BriefySchemaNode(SQLAlchemySchemaNode):
+    """Colander schema validation for SQLAlchemy."""
+
+    def get_schema_from_column(self, prop: ColumnProperty, overrides: dict) -> colander.SchemaNode:
+        """Build and return a :class:`colander.SchemaNode` for a given Column.
+
+        This method uses information stored in the column within the ``info``
+        that was passed to the Column on creation.  This means that
+        ``Colander`` options can be specified declaratively in
+        ``SQLAlchemy`` models using the ``info`` argument that you can
+        pass to :class:`sqlalchemy.Column`.
+
+        Arguments/Keywords
+
+        prop
+            A given :class:`sqlalchemy.orm.properties.ColumnProperty`
+            instance that represents the column being mapped.
+        overrides
+            A dict-like structure that consists of schema attributes to
+            override imperatively. Values provides as part of :attr:`overrides`
+            will take precedence over all others.
+        """
+        column_name = prop.key
+        node_name = column_name[1:] if column_name.startswith('_') else column_name
+        excludes = self.excludes
+        to_exclude = column_name in excludes or node_name in excludes
+        if to_exclude:
+            return None
+        node = super().get_schema_from_column(prop, overrides)
+        node.name = node_name
+        return node
 
 
 class NullSchema(colander.MappingSchema):

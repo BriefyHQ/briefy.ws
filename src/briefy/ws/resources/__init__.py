@@ -10,7 +10,6 @@ from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from briefy.ws.utils import paginate
 from briefy.ws.utils import user
-from colanderalchemy import SQLAlchemySchemaNode
 from cornice.validators import colander_body_validator
 from cornice.util import json_error
 from cornice.resource import view
@@ -105,7 +104,7 @@ class BaseResource:
     @property
     def schema_filter(self):
         """Schema for filtering and ordering operations."""
-        return SQLAlchemySchemaNode(self.model, unknown='ignore')
+        return data.BriefySchemaNode(self.model, unknown='ignore')
 
     @property
     def filter_allowed_fields(self):
@@ -382,7 +381,7 @@ class RESTService(BaseResource):
         """Schema for write operations."""
         colander_config = self.model.__colanderalchemy_config__
         excludes = colander_config.get('excludes', self.default_excludes)
-        return SQLAlchemySchemaNode(
+        return data.BriefySchemaNode(
             self.model, unknown='ignore', excludes=excludes
         )
 

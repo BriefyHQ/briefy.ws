@@ -1,10 +1,10 @@
 Briefy Microservices
-#####################
+####################
 
 A helper package to easy development of microservices using the best practices for Briefy.co.
 
 Table of Contents
-==========================================
+=================
 
 .. toctree::
    :maxdepth: 1
@@ -17,7 +17,7 @@ Table of Contents
    history
 
 Indices and tables
-==========================================
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`

@@ -1,5 +1,4 @@
 """Custom common validators."""
-
 import uuid
 
 

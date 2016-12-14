@@ -8,7 +8,7 @@ flake8-docstrings
 pydocstyle==1.0.0
 httmock==1.2.5
 pyramid-debugtoolbar==2.4.2
-pytest==3.0.2
+pytest==3.0.5
 pytest-cov==2.3.1
 pytz==2015.7
 snowballstemmer==1.2.1
