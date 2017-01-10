@@ -369,6 +369,19 @@ class RESTService(BaseResource):
         ('PUT', tuple()),
     )
 
+    _columns_map = ()
+    """Tuple with all metadata about the fields returned in the listing set payload.
+
+    This data will be available in the payload as "columns" attribute.
+    Ex::
+
+        _column_map = (
+            ('country', {'label': 'Country', 'type': 'country', 'url': '', 'filter': ''}),
+            ('total', {'label': 'Total', 'type': 'integer', 'url': '', 'filter': ''}),
+        )
+
+    """
+
     _default_notify_events = {
         'POST': events.ObjectCreatedEvent,
         'PUT': events.ObjectUpdatedEvent,
@@ -450,6 +463,10 @@ class RESTService(BaseResource):
         headers['Total-Records'] = '{total}'.format(total=total)
         # Force in here to use the listing serialization.
         pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
+        # also append columns metadata if available
+        columns_map = self._columns_map
+        if columns_map:
+            pagination['columns'] = [{key: value} for key, value in columns_map]
         return pagination
 
     @view(validators='_run_validators', permission='view')
