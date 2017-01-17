@@ -39,7 +39,7 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
         return node
 
     def get_schema_from_column(self, prop, overrides):
-        """ Build and return a :class:`colander.SchemaNode` for a given Column.
+        """Build and return a :class:`colander.SchemaNode` for a given Column.
 
         This method uses information stored in the column within the ``info``
         that was passed to the Column on creation.  This means that
@@ -60,7 +60,7 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
         return self._get_node(prop, overrides, 'get_schema_from_column')
 
     def get_schema_from_relationship(self, prop, overrides):
-        """ Build and return a :class:`colander.SchemaNode` for a relationship.
+        """Build and return a :class:`colander.SchemaNode` for a relationship.
 
         The mapping process will translate one-to-many and many-to-many
         relationships from SQLAlchemy into a ``Sequence`` of ``Mapping`` nodes
@@ -93,7 +93,6 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
             will take precendence over all others.  Example keys include
             ``children``, ``includes``, ``excludes``, ``overrides``.
         """
-
         # The name of the SchemaNode is the ColumnProperty key.
         name = self._change_name(prop)
         kwargs = dict(name=name)
@@ -103,8 +102,7 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
         class_ = prop.mapper.class_
 
         if declarative_overrides.pop('exclude', False):
-            logger.debug('Relationship %s skipped due to declarative overrides',
-                      name)
+            logger.debug('Relationship %s skipped due to declarative overrides', name)
             return None
 
         for key in ['name', 'typ']:
