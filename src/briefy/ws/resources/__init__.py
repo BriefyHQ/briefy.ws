@@ -376,8 +376,8 @@ class RESTService(BaseResource):
     Ex::
 
         _column_map = (
-            ('country', {'label': 'Country', 'type': 'country', 'url': '', 'filter': ''}),
-            ('total', {'label': 'Total', 'type': 'integer', 'url': '', 'filter': ''}),
+            {'field': 'country', 'label': 'Country', 'type': 'country', 'url': '', 'filter': ''},
+            {'field': 'total', 'label': 'Total', 'type': 'integer', 'url': '', 'filter': ''},
         )
 
     """
@@ -466,7 +466,7 @@ class RESTService(BaseResource):
         # also append columns metadata if available
         columns_map = self._columns_map
         if columns_map:
-            pagination['columns'] = [{key: value} for key, value in columns_map]
+            pagination['columns'] =  columns_map
         return pagination
 
     @view(validators='_run_validators', permission='view')
