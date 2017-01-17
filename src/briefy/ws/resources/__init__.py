@@ -466,7 +466,7 @@ class RESTService(BaseResource):
         # also append columns metadata if available
         columns_map = self._columns_map
         if columns_map:
-            pagination['columns'] =  columns_map
+            pagination['columns'] = columns_map
         return pagination
 
     @view(validators='_run_validators', permission='view')
