@@ -9,6 +9,7 @@ History
     * BODY-88: Improve apply_secutiry to use context permissions (rudaporto).
     * BODY-89: Improve logging. (ericof).
     * BODY-90: Remove leading underscore from node names. (ericof).
+    * Same as before but also for relationship fields (rudaporto).
 
 1.1.1 (2016-10-04)
 ------------------
