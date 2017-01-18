@@ -1,6 +1,4 @@
 """Context base factory for cornice resources."""
-
-from pyramid.authentication import Authenticated
 from pyramid.authorization import Allow
 
 import uuid
