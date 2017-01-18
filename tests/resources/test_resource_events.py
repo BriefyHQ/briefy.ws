@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 class AclMock:
     """Acl mock."""
+
     real = 1
 
 
