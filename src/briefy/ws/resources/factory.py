@@ -42,9 +42,20 @@ class BaseFactory(object):
         permissions.extend(__base_admin_acl__)
         # ACL for each Factory
         permissions.extend(self.__base_acl__)
-        # Computed acl
+        # Computed acl from model
+        permissions.extend(self.model_permissions)
+        # Computed acl from workflow
         permissions.extend(self.workflow_permissions)
         return permissions
+
+    @property
+    def model_permissions(self) -> list:
+        """Get permissions defined on model level."""
+        model = self.model
+        if model:
+            return [(Allow, role, permission) for role, permission in model.__acl__()]
+        else:
+            return []
 
     @property
     def workflow_permissions(self) -> list:
