@@ -10,6 +10,7 @@ History
     * BODY-89: Improve logging. (ericof).
     * BODY-90: Remove leading underscore from node names. (ericof).
     * Same as BODY-90 but also for relationship fields and fields of schema node attributes (rudaporto).
+    * Implement security filters for all REST methods improving BaseResource.apply_security (rudaporto).
 
 
 1.1.1 (2016-10-04)

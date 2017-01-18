@@ -191,21 +191,26 @@ class BaseResource:
             # also execute the event to dispatch to sqs if needed
             event()
 
-    def apply_security(self, query):
+    def apply_security(self, query, permission):
         """Filter objects this user is allowed to see.
 
         :param query: Query object.
         :return: Query object with filter applied.
         """
-        user = self.request.user
-        model = self.model
-        allowed = has_permission('list', self.context, self.request)
-        global_list = user.id in allowed.principals
-        can_list = global_list or model._can_list(user)
-        query = query.filter(can_list)
+        acl = has_permission(permission, self.context, self.request)
+        if not acl.real:
+            user_id = self.request.user.id
+            model = self.model
+            permission_attr_name = 'can_{permission}_users'.format(permission=permission)
+            permission_attr = getattr(model, permission_attr_name, None)
+            # without filter the query will return all data so we need to raise the exception
+            if not permission_attr:
+                self.request.response.status_code = 403
+                raise Unauthorized('Authorization error, permission not found.')
+            query = query.filter(permission_attr.any(user_id=user_id))
         return query
 
-    def get_one(self, id):
+    def get_one(self, id, permission='view'):
         """Given an id, return an instance of the model object or raise a not found exception.
 
         :param id: Id for the object
@@ -213,6 +218,7 @@ class BaseResource:
         """
         model = self.model
         query = self._get_base_query()
+        self.apply_security(query, permission=permission)
         obj = query.filter(model.id == id).one_or_none()
 
         if not obj:
@@ -237,7 +243,7 @@ class BaseResource:
         query = self.filter_query(query, query_params)
 
         # Apply security
-        query = self.apply_security(query)
+        query = self.apply_security(query, permission='view')
 
         # Apply sorting
         query = self.sort_query(query, query_params)
@@ -419,7 +425,7 @@ class RESTService(BaseResource):
                 child.default = colander.null
         return schema
 
-    @view(validators='_run_validators', permission='add')
+    @view(validators='_run_validators', permission='create')
     def collection_post(self):
         """Add a new instance.
 
@@ -473,14 +479,14 @@ class RESTService(BaseResource):
     def get(self):
         """Get an instance of the model object."""
         id = self.request.matchdict.get('id', '')
-        obj = self.get_one(id)
+        obj = self.get_one(id, permission='view')
         return obj
 
     @view(validators='_run_validators', permission='edit')
     def put(self):
         """Update an existing object."""
         id = self.request.matchdict.get('id', '')
-        obj = self.get_one(id)
+        obj = self.get_one(id, permission='edit')
         obj.update(self.request.validated)
         self.session.flush()
         self.notify_obj_event(obj, 'PUT')
@@ -488,8 +494,8 @@ class RESTService(BaseResource):
 
     @view(permission='delete')
     def delete(self):
-        """Soft delete an object if there is an apropriate transition for it."""
-        obj = self.get_one(id)
+        """Soft delete an object if there is an appropriated transition for it."""
+        obj = self.get_one(id, permission='delete')
         # We do not delete things from the Database -
         # The delete event should be enough to trigger
         # transitions that will set a delete-like

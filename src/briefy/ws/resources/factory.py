@@ -7,7 +7,7 @@ import uuid
 
 
 __base_admin_acl__ = [
-    (Allow, Authenticated, ['add', 'delete', 'edit', 'list', 'view'])
+    (Allow, 'g:briefy', ['list', 'view'])
     ]
 
 
