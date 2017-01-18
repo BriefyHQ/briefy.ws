@@ -4,6 +4,23 @@ from pyramid.testing import DummyRequest
 from unittest.mock import Mock
 
 
+class AclMock:
+    """Acl mock."""
+    real = 1
+
+
+class AuthPolicyMock:
+    """Auth policy mock."""
+
+    def effective_principals(self, request):
+        """Mock user information."""
+        return self
+
+    def permits(self, context, principals, permission):
+        """Mock auth policy permits."""
+        return AclMock()
+
+
 class RequestRegistry(dict):
     def __init__(self):
         self.used_keys = []
@@ -26,6 +43,10 @@ class RequestRegistry(dict):
 
     def notify(self, event):
         self.notifications.append(event)
+
+    def queryUtility(self, interface):
+        """Mock AuthPolice."""
+        return AuthPolicyMock()
 
 
 class Request(DummyRequest):
