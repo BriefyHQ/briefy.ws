@@ -201,7 +201,7 @@ class BaseResource:
         if not acl.real:
             user_id = self.request.user.id
             model = self.model
-            permission_attr_name = 'can_{permission}_users'.format(permission=permission)
+            permission_attr_name = 'can_{permission}_roles'.format(permission=permission)
             permission_attr = getattr(model, permission_attr_name, None)
             # without filter the query will return all data so we need to raise the exception
             if not permission_attr:
