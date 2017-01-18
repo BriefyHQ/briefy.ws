@@ -53,9 +53,22 @@ class BaseFactory(object):
         """Get permissions defined on model level."""
         model = self.model
         if model:
-            return [(Allow, role, permission) for role, permission in model.__acl__()]
+            return [(Allow, role, permissions) for role, permissions in model.__acl__()]
         else:
             return []
+
+    def has_global_permissions(self, permission, roles) -> bool:
+        """Return true if the permission is global in the model level."""
+        model = self.model
+        if not model:
+            return False
+        raw_acl = self.model.__raw_acl__
+        for acl_permissions, acl_roles in raw_acl:
+            if acl_permissions == permission:
+                for role in roles:
+                    if role in acl_roles:
+                        return True
+                break
 
     @property
     def workflow_permissions(self) -> list:

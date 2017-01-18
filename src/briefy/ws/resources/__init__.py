@@ -197,9 +197,10 @@ class BaseResource:
         :param query: Query object.
         :return: Query object with filter applied.
         """
-        acl = has_permission(permission, self.context, self.request)
-        if not acl.real:
-            user_id = self.request.user.id
+        user = self.request.user
+        has_global_permission = self.context.has_global_permissions(permission, user.groups)
+        if not has_global_permission:
+            user_id = user.id
             model = self.model
             permission_attr_name = 'can_{permission}_roles'.format(permission=permission)
             permission_attr = getattr(model, permission_attr_name, None)
