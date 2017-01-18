@@ -15,7 +15,6 @@ from cornice.util import json_error
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
-from pyramid.security import has_permission
 
 import colander
 import sqlalchemy as sa
@@ -199,7 +198,13 @@ class BaseResource:
         """
         user = self.request.user
         has_global_permission = self.context.has_global_permissions(permission, user.groups)
-        if not has_global_permission:
+        if has_global_permission:
+            # Important: self.context (factory) identify model __raw_acl__ permissions as global.
+            # This is important to be able to give view or list permission in the context and
+            # at same time apply local role filters.
+            # When global model permission is available the query filter will be skipped.
+            pass
+        else:
             user_id = user.id
             model = self.model
             permission_attr_name = 'can_{permission}_roles'.format(permission=permission)

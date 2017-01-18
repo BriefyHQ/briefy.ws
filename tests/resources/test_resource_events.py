@@ -4,6 +4,20 @@ from pyramid.testing import DummyRequest
 from unittest.mock import Mock
 
 
+class ContextMock:
+
+    def has_global_permissions(self, permission, roles):
+        """Mock global permission always true method."""
+        return True
+
+
+class UserMock:
+    """User mock object."""
+
+    groups = ['g:briefy']
+    id = 'fbda5789-2e32-44c4-b9dc-d0d217454a2a'
+
+
 class AclMock:
     """Acl mock."""
 
@@ -51,9 +65,11 @@ class RequestRegistry(dict):
 
 
 class Request(DummyRequest):
+
     def __init__(self):
         super().__init__()
         self.registry = RequestRegistry()
+        self.user = UserMock()
 
     validated = {}
     matchdict = Mock()
@@ -73,17 +89,17 @@ class Model:
 
 def test_base_resource_triggers_get_events(login):
     r = Request()
-    u = login
-    b = RESTService(u, r)
+    c = ContextMock()
+    b = RESTService(c, r)
 
     assert b.request is r
-    assert b.context is u
+    assert b.context is c
 
 
 def test_base_resource_get(login):
     r = Request()
-    u = login
-    b = RESTService(u, r)
+    c = ContextMock()
+    b = RESTService(c, r)
     b.model = Model()
 
     b.get()
@@ -92,8 +108,8 @@ def test_base_resource_get(login):
 
 def test_base_resource_post(login):
     r = Request()
-    u = login
-    b = RESTService(u, r)
+    c = ContextMock()
+    b = RESTService(c, r)
     b.model = Model()
 
     b.collection_post()
@@ -102,8 +118,8 @@ def test_base_resource_post(login):
 
 def test_base_resource_put(login):
     r = Request()
-    u = login
-    b = RESTService(u, r)
+    c = ContextMock()
+    b = RESTService(c, r)
     b.model = Model()
 
     b.put()
@@ -114,10 +130,9 @@ def test_base_resource_put(login):
 
 def test_base_resource_delete(login):
     r = Request()
-    u = login
-    b = RESTService(u, r)
+    c = ContextMock()
+    b = RESTService(c, r)
     b.model = Model()
-
     b.delete()
 
     assert isinstance(r.registry.notifications[0], events.ObjectLoadedEvent)
