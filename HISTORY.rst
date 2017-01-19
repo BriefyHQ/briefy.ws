@@ -12,6 +12,7 @@ History
     * Same as BODY-90 but also for relationship fields and fields of schema node attributes (rudaporto).
     * Implement security filters for all REST methods improving BaseResource.apply_security (rudaporto).
     * BaseFactory now append permission from model class using __acl__ class method (rudaporto).
+    * Only try to apply security filter query if model is subclass of LocalRolesMixin (rudaporto).
 
 
 1.1.1 (2016-10-04)

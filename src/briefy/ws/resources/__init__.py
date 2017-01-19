@@ -1,4 +1,5 @@
 """Base Resources for briefy.ws."""
+from briefy.common.db.mixins import LocalRolesMixin
 from briefy.common.workflow.base import AttachedTransition
 from briefy.common.workflow.exceptions import WorkflowPermissionException
 from briefy.common.workflow.exceptions import WorkflowTransitionException
@@ -196,6 +197,7 @@ class BaseResource:
         :param query: Query object.
         :return: Query object with filter applied.
         """
+        model = self.model
         user = self.request.user
         has_global_permission = self.context.has_global_permissions(permission, user.groups)
         if has_global_permission:
@@ -204,14 +206,12 @@ class BaseResource:
             # at same time apply local role filters.
             # When global model permission is available the query filter will be skipped.
             pass
-        else:
+        elif issubclass(model, LocalRolesMixin):
             user_id = user.id
-            model = self.model
             permission_attr_name = 'can_{permission}_roles'.format(permission=permission)
             permission_attr = getattr(model, permission_attr_name, None)
             # without filter the query will return all data so we need to raise the exception
             if not permission_attr:
-                self.request.response.status_code = 403
                 raise Unauthorized('Authorization error, permission not found.')
             query = query.filter(permission_attr.any(user_id=user_id))
         return query
