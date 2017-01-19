@@ -534,7 +534,6 @@ class WorkflowAwareResource(BaseResource):
 
         :returns: Newly created instance
         """
-        request = self.request
         transition = self.request.validated['transition']
         message = self.request.validated.get('message', '')
         workflow = self.workflow
@@ -544,13 +543,6 @@ class WorkflowAwareResource(BaseResource):
             transition_method = getattr(workflow, transition, None)
             if isinstance(transition_method, AttachedTransition):
                 transition_method(message=message)
-
-                wf_event = events.WorkflowTranstionEvent(workflow.document,
-                                                         request,
-                                                         transition_method)
-                request.registry.notify(wf_event)
-                # also execute the event to dispatch to sqs if needed
-                wf_event()
 
                 response = {
                     'status': True,
