@@ -13,6 +13,7 @@ History
     * Implement security filters for all REST methods improving BaseResource.apply_security (rudaporto).
     * BaseFactory now append permission from model class using __acl__ class method (rudaporto).
     * Only try to apply security filter query if model is subclass of LocalRolesMixin (rudaporto).
+    * Change BaseResource.default_filters hook to be a method: it receives and returns a query (with filters or params applied) (rudaporto).
 
 
 1.1.1 (2016-10-04)

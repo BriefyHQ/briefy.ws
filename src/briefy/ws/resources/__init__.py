@@ -67,14 +67,13 @@ class BaseResource:
         """
         return user.get_public_user_info(user_id)
 
-    @property
-    def default_filters(self) -> tuple:
+    def default_filters(self, query) -> object:
         """Default filters to be applied to every query.
 
         This is supposed to be specialized by resource classes.
         :returns: A tuple of default filters to be applied to queries.
         """
-        return tuple()
+        return query
 
     def _get_base_query(self):
         """Return the base query for this service.
@@ -83,8 +82,7 @@ class BaseResource:
         """
         model = self.model
         query = model.query()
-        for filter_ in self.default_filters:
-            query = query.filter(filter_)
+        query = self.default_filters(query)
         return query
 
     def get_required_fields(self, method: str) -> tuple:
