@@ -286,14 +286,4 @@ def native_value(value: str, field: str=None):
             value = True
         elif value.lower() in ['off', 'false', 'no']:
             value = False
-
-        # HACK: Some fields should be coerced here.
-        if field == 'id':
-            return value
-
-        try:
-            return ast.literal_eval(value)
-        except (ValueError, SyntaxError):
-            pass
-
     return value
