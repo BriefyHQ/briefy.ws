@@ -523,10 +523,30 @@ class WorkflowAwareResource(BaseResource):
             return workflow
         return None
 
+    def _fields_schema(self, transition):
+        """Return a schema to handle fields payload."""
+        schema = None
+        includes = transition.required_fields
+        if includes:
+            schema = data.BriefySchemaNode(
+                self.model, unknown='ignore', includes=includes
+            )
+            schema.name = 'fields'
+        return schema
+
     @property
     def schema_post(self):
         """Schema for write operations."""
-        return data.WorkflowTransitionSchema(unknown='ignore')
+        body = self.request.json_body
+        payload = body if body else self.request.POST
+        transition_id = payload.get('transition')
+        workflow = self.workflow
+        transition = workflow.transitions.get(transition_id)
+        schema = data.WorkflowTransitionSchema(unknown='ignore')
+        fields = self._fields_schema(transition)
+        if fields:
+            schema.children.append(fields)
+        return schema
 
     @view(validators='_run_validators')
     def collection_post(self):
@@ -536,28 +556,35 @@ class WorkflowAwareResource(BaseResource):
         """
         transition = self.request.validated['transition']
         message = self.request.validated.get('message', '')
+        fields = self.request.validated.get('fields', {})
         workflow = self.workflow
+        valid_transitions_list = str(list(workflow.transitions))
+        if transition in valid_transitions_list:
+            # Execute transition
+            try:
+                transition_method = getattr(workflow, transition, None)
+                if isinstance(transition_method, AttachedTransition):
+                    transition_method(message=message, fields=fields)
 
-        # Execute transition
-        try:
-            transition_method = getattr(workflow, transition, None)
-            if isinstance(transition_method, AttachedTransition):
-                transition_method(message=message)
+                    response = {
+                        'status': True,
+                        'message': 'Transition executed: {id}'.format(id=transition)
+                    }
 
-                response = {
-                    'status': True,
-                    'message': 'Transition executed: {id}'.format(id=transition)
-                }
-
-                return response
-            else:
-                msg = 'Transition not found: {id}'.format(id=transition)
-                raise NotFound(msg)
-        except WorkflowPermissionException:
-            msg = 'Unauthorized transition: {id}'.format(id=transition)
-            raise Unauthorized(msg)
-        except WorkflowTransitionException:
-            valid_transitions_list = str(list(workflow.transitions))
+                    return response
+                else:
+                    msg = 'Transition not found: {id}'.format(id=transition)
+                    raise NotFound(msg)
+            except WorkflowPermissionException:
+                msg = 'Unauthorized transition: {id}'.format(id=transition)
+                raise Unauthorized(msg)
+            except WorkflowTransitionException as exc:
+                msg = str(exc)
+                field = 'fields'
+                if 'Message' in str(exc):
+                    field = 'message'
+                self.raise_invalid('body', field, msg)
+        else:
             state = workflow.state.name
             msg = 'Invalid transition: {id} (for state: {state}). ' \
                   'Your valid transitions list are: {transitions}'
