@@ -51,13 +51,10 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
 
         # Handle the _since specific filter.
         if param in ('_since', '_to', '_before'):
-            value = data.native_value(param_value.strip('"'))
-            if not isinstance(value, int):
-                raise ValidationError(
-                    message="Invalid value for '{0}'".format(param),
-                    location='querystring',
-                    name=param
-                )
+            try:
+                value = int(param_value)
+            except ValueError as exc:
+                raise ValueError('Parameter "{param}" is not a valid integer.'.format(param=param))
 
             if param == '_since':
                 operator = COMPARISON.GT

@@ -10,7 +10,6 @@ from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm import RelationshipProperty
 from sqlalchemy.schema import Column
 
-import ast
 import colander
 
 
@@ -244,7 +243,7 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
             elif isinstance(prop, colander.SchemaNode):
                 node = prop
             elif isinstance(prop, str) and name in overrides:
-                name_overrides_copy['name']= prop
+                name_overrides_copy['name'] = prop
                 node = colander.SchemaNode(**name_overrides_copy)
             else:
                 logger.debug(

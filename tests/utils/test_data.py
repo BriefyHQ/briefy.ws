@@ -7,7 +7,8 @@ def test_native_value(testapp):
     func = data.native_value
 
     assert func('360', 'id') == '360'
-    assert func('360', 'other_field') == 360
+    # Removed the transformation of string to integer from filters module
+    # assert func('360', 'other_field') == 360
 
     assert func('on', 'other_field') is True
     assert func('true', 'other_field') is True
