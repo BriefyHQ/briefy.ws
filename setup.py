@@ -16,7 +16,7 @@ requires = [
     'colanderalchemy',
     'cornice==2.2.0',
     'prettyconf',
-    'pyramid',
+    'pyramid==1.7.3',
     'pyramid_jwt',
     'pyramid_tm',
     'requests',

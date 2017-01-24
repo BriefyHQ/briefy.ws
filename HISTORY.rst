@@ -14,6 +14,7 @@ History
     * BaseFactory now append permission from model class using __acl__ class method (rudaporto).
     * Only try to apply security filter query if model is subclass of LocalRolesMixin (rudaporto).
     * Change BaseResource.default_filters hook to be a method: it receives and returns a query (with filters or params applied) (rudaporto).
+    * Pin pyramid version to 1.7.3 (rudaporto).
 
 
 1.1.1 (2016-10-04)
