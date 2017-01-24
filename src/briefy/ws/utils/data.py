@@ -243,6 +243,9 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
                 )
             elif isinstance(prop, colander.SchemaNode):
                 node = prop
+            elif isinstance(prop, str) and name in overrides:
+                name_overrides_copy['name']= prop
+                node = colander.SchemaNode(**name_overrides_copy)
             else:
                 logger.debug(
                     'Attribute %s skipped due to not being '
