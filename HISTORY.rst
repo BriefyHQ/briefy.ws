@@ -17,6 +17,7 @@ History
     * Pin pyramid version to 1.7.3 (rudaporto).
     * Change create_filter_from_query_params to not use utils.data.native_value to convert string to integer (rudaporto).
     * Fix bug: apply security query was not applied in resource get_one (rudaporto).
+    * New BaseResource class attribute: enable_security = True. This can be used in custom filters do disable apply_security (rudaporto).
 
 
 1.1.1 (2016-10-04)

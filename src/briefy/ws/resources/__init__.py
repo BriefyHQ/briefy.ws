@@ -30,6 +30,7 @@ class BaseResource:
     default_order_by = 'updated_at'
     default_order_direction = 1
     filter_related_fields = []
+    enable_security = True
 
     _default_notify_events = {}
 
@@ -222,7 +223,8 @@ class BaseResource:
         """
         model = self.model
         query = self._get_base_query()
-        query = self.apply_security(query, permission=permission)
+        if self.enable_security:
+            query = self.apply_security(query, permission=permission)
         obj = query.filter(model.id == id).one_or_none()
 
         if not obj:
@@ -247,7 +249,8 @@ class BaseResource:
         query = self.filter_query(query, query_params)
 
         # Apply security
-        query = self.apply_security(query, permission='view')
+        if self.enable_security:
+            query = self.apply_security(query, permission='view')
 
         # Apply sorting
         query = self.sort_query(query, query_params)
