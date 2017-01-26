@@ -16,6 +16,7 @@ History
     * Change BaseResource.default_filters hook to be a method: it receives and returns a query (with filters or params applied) (rudaporto).
     * Pin pyramid version to 1.7.3 (rudaporto).
     * Change create_filter_from_query_params to not use utils.data.native_value to convert string to integer (rudaporto).
+    * Fix bug: apply security query was not applied in resource get_one (rudaporto).
 
 
 1.1.1 (2016-10-04)

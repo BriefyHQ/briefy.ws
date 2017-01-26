@@ -222,7 +222,7 @@ class BaseResource:
         """
         model = self.model
         query = self._get_base_query()
-        self.apply_security(query, permission=permission)
+        query = self.apply_security(query, permission=permission)
         obj = query.filter(model.id == id).one_or_none()
 
         if not obj:
