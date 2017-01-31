@@ -1,4 +1,5 @@
 """briefy.ws sqlalchemy event handlers for model classes."""
+from briefy.common.db.mixins.workflow import WorkflowBase
 from pyramid.threadlocal import get_current_request
 from sqlalchemy import event as sa_event
 
@@ -14,7 +15,8 @@ def base_receive_init_workflow_context(target, args, kwargs):
     """
     request = get_current_request()
     if request:
-        kwargs['request'] = request
+        if isinstance(target, WorkflowBase):
+            kwargs['request'] = request
         auth_user = request.user
         if auth_user and hasattr(target, 'workflow_context'):
             kwargs['workflow_context'] = auth_user
