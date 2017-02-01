@@ -216,9 +216,9 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
             raise ValueError(msg)
 
         properties = sorted(self.inspector.attrs, key=_creation_order)
-        # sorted to maintain the order in which the attributes
-        # are defined
-        for name in includes or [item.key for item in properties]:
+        # Explicitly add overrides in here
+        all_fields = [item.key for item in properties] + [o for o in overrides]
+        for name in includes or all_fields:
             prop = self.inspector.attrs.get(name, name)
 
             if name in excludes or (includes and name not in includes):
