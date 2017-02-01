@@ -165,15 +165,6 @@ class BaseResource:
         request.errors.add(location, name, description, **kwargs)
         raise json_error(request)
 
-    def attach_request(self, obj):
-        """Attach current request in one model object instance.
-
-        :param obj: sqlalchemy model obj instance
-        :return: sqlalchemy model obj instance with current request as instance attribute
-        """
-        obj.request = self.request
-        return obj
-
     def notify_obj_event(self, obj, method=None):
         """Create right event object based on current request method.
 
@@ -263,13 +254,6 @@ class BaseResource:
         """
         query, query_params = self._get_records_query()
         pagination = self.paginate(query, query_params)
-        data = pagination['data']
-        records = [self.attach_request(record) for record in data]
-        pagination['data'] = records
-
-        for record in records:
-            self.notify_obj_event(record, 'GET')
-
         return pagination
 
     def count_records(self) -> int:
@@ -451,7 +435,6 @@ class RESTService(BaseResource):
 
         session = self.session
         obj = model(**payload)
-        obj = self.attach_request(obj)
         session.add(obj)
         session.flush()
         self.notify_obj_event(obj, 'POST')
