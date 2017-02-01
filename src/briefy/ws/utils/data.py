@@ -217,7 +217,8 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
 
         properties = sorted(self.inspector.attrs, key=_creation_order)
         # Explicitly add overrides in here
-        all_fields = [item.key for item in properties] + [o for o in overrides]
+        properties = [item.key for item in properties]
+        all_fields = properties + [o for o in overrides if o not in properties]
         for name in includes or all_fields:
             prop = self.inspector.attrs.get(name, name)
 
