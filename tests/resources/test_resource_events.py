@@ -103,7 +103,7 @@ def test_base_resource_get(login):
     b.model = Model()
 
     b.get()
-    assert isinstance(r.registry.notifications[0], events.ObjectLoadedEvent)
+    assert len(r.registry.notifications) == 0
 
 
 def test_base_resource_post(login):
@@ -123,9 +123,7 @@ def test_base_resource_put(login):
     b.model = Model()
 
     b.put()
-
-    assert isinstance(r.registry.notifications[0], events.ObjectLoadedEvent)
-    assert isinstance(r.registry.notifications[1], events.ObjectUpdatedEvent)
+    assert isinstance(r.registry.notifications[0], events.ObjectUpdatedEvent)
 
 
 def test_base_resource_delete(login):
@@ -135,5 +133,4 @@ def test_base_resource_delete(login):
     b.model = Model()
     b.delete()
 
-    assert isinstance(r.registry.notifications[0], events.ObjectLoadedEvent)
-    assert isinstance(r.registry.notifications[1], events.ObjectDeletedEvent)
+    assert isinstance(r.registry.notifications[0], events.ObjectDeletedEvent)

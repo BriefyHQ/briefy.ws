@@ -225,8 +225,7 @@ class BaseResource:
                     id=id
                 )
             )
-        self.notify_obj_event(obj, 'GET')
-        return self.attach_request(obj)
+        return obj
 
     def _get_records_query(self):
         """Return a base query for records.
