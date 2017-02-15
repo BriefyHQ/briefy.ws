@@ -209,16 +209,26 @@ class BriefySchemaNode(SQLAlchemySchemaNode):
 
         return node
 
-    def add_nodes(self, includes, excludes, overrides):
+    def add_nodes(self, base_includes, excludes, overrides):
         """Add nodes to the schema."""
-        if set(excludes) & set(includes):
+        if set(excludes) & set(base_includes):
             msg = 'excludes and includes are mutually exclusive.'
             raise ValueError(msg)
 
         properties = sorted(self.inspector.attrs, key=_creation_order)
-        # sorted to maintain the order in which the attributes
-        # are defined
-        for name in includes or [item.key for item in properties]:
+        # Explicitly add overrides in here
+        properties = [item.key for item in properties]
+        all_fields = properties + [o for o in overrides if o not in properties]
+        includes = []
+        if base_includes:
+            for item in base_includes:
+                prefixed = '_{name}'.format(name=item)
+                if (item in all_fields):
+                    includes.append(item)
+                elif (prefixed in all_fields):
+                    includes.append(prefixed)
+
+        for name in includes or all_fields:
             prop = self.inspector.attrs.get(name, name)
 
             if name in excludes or (includes and name not in includes):
