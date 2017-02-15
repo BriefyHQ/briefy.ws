@@ -32,7 +32,7 @@ def base_receive_load_workflow_context(target, context):
     """
     request = get_current_request()
     if request:
-        if hasattr(target, 'request') and not target.request:
+        if 'request' in target.__dir__() and not hasattr(target, 'request'):
             target.request = request
         auth_user = request.user
         set_user = hasattr(target, 'workflow_context') and not target.workflow_context
