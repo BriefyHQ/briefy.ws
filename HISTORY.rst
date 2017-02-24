@@ -2,7 +2,7 @@
 History
 =======
 
-1.1.2 (Unreleased)
+2.0.0 (Unreleased)
 ------------------
     * BODY-62: Implement Pagination on BaseResource (ericof).
     * BODY-64: Add like filter. (ericof)
@@ -19,6 +19,7 @@ History
     * Fix bug: apply security query was not applied in resource get_one (rudaporto).
     * New BaseResource class attribute: enable_security = True. This can be used in custom filters do disable apply_security (rudaporto).
     * Fix condition used to apply request on the model instance (rudaporto).
+    * Use newrelic agent to add user information as custom attributes associated to a request (rudaporto).
 
 
 1.1.1 (2016-10-04)
