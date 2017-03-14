@@ -1,7 +1,9 @@
 """Pagination to be used with REST Services."""
+from collections import UserList
+from sqlalchemy.orm import joinedload
 
 
-class Page(list):
+class Page(UserList):
     """A list/iterator representing the items on one page of a larger collection.
 
     An instance of the "Page" class is created from a _collection_ which is any
@@ -107,6 +109,8 @@ class Page(list):
         # preserving behavior for BW compat
         if self.page < 1:
             self.page = 1
+        # TODO  - rewrite this stuff so that we count from 0
+        # counting from 1 is for dead-tree books;
 
         self.items_per_page = items_per_page
 
@@ -123,10 +127,10 @@ class Page(list):
             first = (self.page - 1) * items_per_page
             last = first + items_per_page
             self.items = list(self.collection[first:last])
-        except TypeError:
+        except TypeError as error:
             raise TypeError(
-                'Your collection of type {type_} cannot be handled by paginate'.format(
-                    type_=type(self.collection_type)
+                'Your collection of type {type_} cannot be handled by paginate: {error}'.format(
+                    type_=type(self.collection_type), error=error
                 )
             )
 
@@ -176,8 +180,8 @@ class Page(list):
             self.next_page = None
             self.items = []
 
-        # This is a subclass of the 'list' type. Initialise the list now.
-        list.__init__(self, self.items)
+        # This is a subclass of the 'UserList' type. Initialise the list now.
+        super().__init__(self.items)
 
     def page_info(self) -> dict:
         """Return a dictionary information about this Page."""
@@ -227,8 +231,31 @@ class Page(list):
         return response
 
 
+
+def get_model_backrefs(model):
+    """Introspect SQLAlchemy instrumented class to get all backereferenced attribute names."""
+    return set(model.__mapper__.relationships.keys())
+
+
+def get_model_foreign_entities_for_listing(model):
+    """Yield names of attributes that should be eager fetched on listing operations."""
+    foreign_entities = get_model_backrefs(model)
+    results = foreign_entities.intersection(getattr(model, '__listing_attributes__', set()))
+    # HACK: 'assignment' is defined in a rather hackish way in our 'Order' object -
+    # while other foreign entities has tables by this name.
+    # We fix the prefetch to get the 'assignments' attribute instead.
+    if 'assignment' in results:
+        results.remove('assignment')
+        results.add('assignments')
+    return results
+
+
 class SQLOrmWrapper:
     """Wrapper class to access elements of an SQLAlchemy ORM query result."""
+
+    eager = False
+    # Don't change fetching statements. Otherwise, force eager loading from SQLAlchemy
+    model = None
 
     def __init__(self, obj):
         """Initialize SQLOrmWrapper.
@@ -237,14 +264,25 @@ class SQLOrmWrapper:
         """
         self.obj = obj
 
-    def __getitem__(self, range: slice):
+    def __getitem__(self, range_: slice):
         """Get item.
 
         :return: Number of objects.
         """
-        if not isinstance(range, slice):
+        if not isinstance(range_, slice):
             raise Exception("__getitem__ without slicing not supported")
-        return self.obj[range]
+        if not self.eager:
+            # Perform unchanged SQLAlchemy fetching
+            return self.obj[range_]
+
+        query = self.obj
+        # sort_by is required, but it is already applied on the BaseResource class.
+        query = query.offset(range_.start).limit(range_.stop - range_.start)
+        attr_params = [joinedload(attr) for attr in
+                                get_model_foreign_entities_for_listing(self.model)]
+        query = query.options(*attr_params)
+        return query.all()
+
 
     def __len__(self) -> int:
         """Count number of objects for the query.
@@ -252,6 +290,8 @@ class SQLOrmWrapper:
         :return: Number of objects.
         """
         return self.obj.count()
+
+
 
 
 class SQLPage(Page):
@@ -267,9 +307,21 @@ class SQLPage(Page):
         :param args: Arguments for pagination.
         :param kwargs: Keyword arguments for pagination.
         """
+        eager = kwargs.pop('eager', False)
+        model = kwargs.pop('model', None)
+
+        if model and eager:
+            wrapper_class = type(
+                'EagerSqlOrmWrapperFor' + model.__name__,
+                (SQLOrmWrapper,),
+                {'eager': eager, 'model': model}
+            )
+        else:
+            wrapper_class = SQLOrmWrapper
+
         super().__init__(
             *args,
-            wrapper_class=SQLOrmWrapper,
+            wrapper_class=wrapper_class,
             **kwargs
         )
 
@@ -339,10 +391,8 @@ def extract_pagination_from_query_params(query_params: dict) -> dict:
         'items_per_page': 25
     }
     for key, value in params.items():
-
-        new_value = query_params.get(
-            '_{key}'.format(key=key), value
-        )
+        value = -1
+        new_value = query_params.get('_' + key, value)
         try:
             value = int(new_value)
         except ValueError:
