@@ -79,7 +79,7 @@ class BaseResource:
     def _get_base_query(self):
         """Return the base query for this service.
 
-        :return: Query object with default filter already applie.
+        :return: Query object with default filter already applied.
         """
         model = self.model
         query = model.query()
@@ -246,13 +246,13 @@ class BaseResource:
         query = self.sort_query(query, query_params)
         return query, query_params
 
-    def get_records(self):
+    def get_records(self, eager=False, model=None):
         """Get all records for this resource and return a dictionary.
 
         :return: dict
         """
         query, query_params = self._get_records_query()
-        pagination = self.paginate(query, query_params)
+        pagination = self.paginate(query, query_params, eager=eager, model=model)
         return pagination
 
     def count_records(self) -> int:
@@ -346,13 +346,13 @@ class BaseResource:
             query = query.order_by(func(column))
         return query
 
-    def paginate(self, query, query_params: dict=None):
+    def paginate(self, query, query_params: dict=None, eager=False, model=None):
         """Pagination."""
         if '_items_per_page' not in query_params:
             query_params['_items_per_page'] = str(self.items_per_page)
         params = paginate.extract_pagination_from_query_params(query_params)
         params['collection'] = query
-        pagination = paginate.SQLPage(**params)
+        pagination = paginate.SQLPage(eager=eager, model=model, **params)
         return pagination()
 
 
@@ -453,7 +453,11 @@ class RESTService(BaseResource):
         :returns: Payload with total records and list of objects
         """
         headers = self.request.response.headers
-        pagination = self.get_records()
+        # Force eager, retrieval of sub-records.
+        # TODO: check 'to_listing_dict' needed  attributes on the models
+        # so that parameters that are not used in listings are not
+        # eagerly loaded.
+        pagination = self.get_records(eager=True, model=self.model)
         total = pagination['total']
         headers['Total-Records'] = '{total}'.format(total=total)
         # Force in here to use the listing serialization.
