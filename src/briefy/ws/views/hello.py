@@ -4,10 +4,11 @@ from pyramid.request import Request
 from pyramid.security import Authenticated
 from pyramid.security import NO_PERMISSION_REQUIRED
 
+
 hello = Service(
-    name="hello",
+    name='hello',
     path='/',
-    description="Welcome"
+    description='Welcome'
 )
 
 

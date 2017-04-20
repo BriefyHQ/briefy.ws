@@ -243,7 +243,7 @@ class SQLOrmWrapper:
         :return: Number of objects.
         """
         if not isinstance(range, slice):
-            raise Exception("__getitem__ without slicing not supported")
+            raise Exception('__getitem__ without slicing not supported')
         return self.obj[range]
 
     def __len__(self) -> int:
@@ -294,7 +294,7 @@ def sql_wrapper_factory(db_session=None):
             :return: Number of objects.
             """
             if not isinstance(range, slice):
-                raise Exception("__getitem__ without slicing not supported")
+                raise Exception('__getitem__ without slicing not supported')
             # value for offset
             offset_v = range.start
             limit = range.stop - range.start
