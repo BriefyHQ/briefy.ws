@@ -20,6 +20,7 @@ History
     * New BaseResource class attribute: enable_security = True. This can be used in custom filters do disable apply_security (rudaporto).
     * Fix condition used to apply request on the model instance (rudaporto).
     * Use newrelic agent to add user information as custom attributes associated to a request (rudaporto).
+    * Upgrade pyramid to version 1.8.3 and cornice to version 2.4.0 (rudaporto).
 
 
 1.1.1 (2016-10-04)
