@@ -4,6 +4,7 @@ from setuptools import setup
 
 import os
 
+
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst')) as f:
     README = f.read()
@@ -14,9 +15,9 @@ requires = [
     'briefy.common',
     'colander',
     'colanderalchemy',
-    'cornice',
+    'cornice==2.4.0',
     'prettyconf',
-    'pyramid',
+    'pyramid==1.8.3',
     'pyramid_jwt',
     'pyramid_tm',
     'requests',
@@ -32,11 +33,11 @@ test_requirements = [
 
 setup(
     name='briefy.ws',
-    version='1.1.1',
+    version='2.0.0',
     description='Briefy microservice helpers.',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
-        "Programming Language :: Python",
+        'Programming Language :: Python',
     ],
     author='Briefy Developers',
     author_email='developers@briefy.co',

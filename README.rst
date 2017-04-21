@@ -1,8 +1,9 @@
 Briefy Webservices Helper
 =========================
 
-TODO
-----
+This package provides base codebase to be used by all microservices in the Briefy solution.
+
+A comprehensive documentation is available at the `Developer Documentation`_ server.
 
 
 Code Health
@@ -23,3 +24,4 @@ Branch       Status
 
 .. _`master`: https://github.com/BriefyHQ/briefy.ws/tree/master
 .. _`develop`: https://github.com/BriefyHQ/briefy.ws/tree/develop
+.. _`Developer Documentation`: https://docs.stg.briefy.co/briefy.ws/

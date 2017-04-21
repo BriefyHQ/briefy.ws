@@ -1,4 +1,5 @@
 """Base Resources for briefy.ws."""
+from briefy.common.db.mixins import LocalRolesMixin
 from briefy.common.workflow.base import AttachedTransition
 from briefy.common.workflow.exceptions import WorkflowPermissionException
 from briefy.common.workflow.exceptions import WorkflowTransitionException
@@ -8,14 +9,13 @@ from briefy.ws.resources import events
 from briefy.ws.resources.validation import validate_id
 from briefy.ws.utils import data
 from briefy.ws.utils import filter
+from briefy.ws.utils import paginate
 from briefy.ws.utils import user
-from colanderalchemy import SQLAlchemySchemaNode
-from cornice.schemas import CorniceSchema
-from cornice.util import json_error
 from cornice.resource import view
+from cornice.util import json_error
+from cornice.validators import colander_body_validator
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
-
 
 import colander
 import sqlalchemy as sa
@@ -26,8 +26,11 @@ class BaseResource:
 
     model = None
     friendly_name = ''
+    items_per_page = 25
     default_order_by = 'updated_at'
     default_order_direction = 1
+    filter_related_fields = []
+    enable_security = True
 
     _default_notify_events = {}
 
@@ -55,8 +58,7 @@ class BaseResource:
             'schema_{method}'.format(method=method.lower()),
             self.schema_read
         )
-        schema = CorniceSchema.from_colander(colander_schema)
-        return schema
+        return colander_schema
 
     def get_user_info(self, user_id: str) -> dict:
         """Get public information about an user with given user_id.
@@ -66,14 +68,13 @@ class BaseResource:
         """
         return user.get_public_user_info(user_id)
 
-    @property
-    def default_filters(self) -> tuple:
+    def default_filters(self, query) -> object:
         """Default filters to be applied to every query.
 
         This is supposed to be specialized by resource classes.
         :returns: A tuple of default filters to be applied to queries.
         """
-        return tuple()
+        return query
 
     def _get_base_query(self):
         """Return the base query for this service.
@@ -82,8 +83,7 @@ class BaseResource:
         """
         model = self.model
         query = model.query()
-        for filter_ in self.default_filters:
-            query = query.filter(filter_)
+        query = self.default_filters(query)
         return query
 
     def get_required_fields(self, method: str) -> tuple:
@@ -103,7 +103,7 @@ class BaseResource:
     @property
     def schema_filter(self):
         """Schema for filtering and ordering operations."""
-        return SQLAlchemySchemaNode(self.model, unknown='ignore')
+        return data.BriefySchemaNode(self.model, unknown='ignore')
 
     @property
     def filter_allowed_fields(self):
@@ -112,6 +112,8 @@ class BaseResource:
         allowed_fields = [child.name for child in schema.children]
         # Allow filtering by state
         allowed_fields.append('state')
+        for field in self.filter_related_fields:
+            allowed_fields.append(field)
         return allowed_fields
 
     @property
@@ -131,7 +133,7 @@ class BaseResource:
         """
         validate_id(request)
 
-    def _run_validators(self, request):
+    def _run_validators(self, request, **kwargs):
         """Run all validators for the current http method.
 
         :param request: request object
@@ -142,11 +144,15 @@ class BaseResource:
         validators = self.validators.get(self.request.method, [])
         for item in validators:
             try:
-                validator = getattr(self, item)
+                if type(item) == str:
+                    validator = getattr(self, item)
+                else:
+                    validator = item
             except AttributeError as e:
                 raise AttributeError('Validator "{name}" specified not found.'.format(name=item))
             else:
                 validator(request)
+        colander_body_validator(request, self.schema)
 
     def raise_invalid(self, location='body', name=None, description=None, **kwargs):
         """Raise a 400 error.
@@ -157,16 +163,7 @@ class BaseResource:
         """
         request = self.request
         request.errors.add(location, name, description, **kwargs)
-        raise json_error(request.errors)
-
-    def attach_request(self, obj):
-        """Attach current request in one model object instance.
-
-        :param obj: sqlalchemy model obj instance
-        :return: sqlalchemy model obj instance with current request as instance attribute
-        """
-        obj.request = self.request
-        return obj
+        raise json_error(request)
 
     def notify_obj_event(self, obj, method=None):
         """Create right event object based on current request method.
@@ -184,14 +181,41 @@ class BaseResource:
             # also execute the event to dispatch to sqs if needed
             event()
 
-    def get_one(self, id):
+    def apply_security(self, query, permission):
+        """Filter objects this user is allowed to see.
+
+        :param query: Query object.
+        :return: Query object with filter applied.
+        """
+        model = self.model
+        user = self.request.user
+        has_global_permission = self.context.has_global_permissions(permission, user.groups)
+        if has_global_permission:
+            # Important: self.context (factory) identify model __raw_acl__ permissions as global.
+            # This is important to be able to give view or list permission in the context and
+            # at same time apply local role filters.
+            # When global model permission is available the query filter will be skipped.
+            pass
+        elif issubclass(model, LocalRolesMixin):
+            user_id = user.id
+            permission_attr_name = 'can_{permission}_roles'.format(permission=permission)
+            permission_attr = getattr(model, permission_attr_name, None)
+            # without filter the query will return all data so we need to raise the exception
+            if not permission_attr:
+                raise Unauthorized('Authorization error, permission not found.')
+            query = query.filter(permission_attr.any(user_id=user_id))
+        return query
+
+    def get_one(self, id, permission='view'):
         """Given an id, return an instance of the model object or raise a not found exception.
 
         :param id: Id for the object
-        :return: Category
+        :return: Object
         """
         model = self.model
         query = self._get_base_query()
+        if self.enable_security:
+            query = self.apply_security(query, permission=permission)
         obj = query.filter(model.id == id).one_or_none()
 
         if not obj:
@@ -201,13 +225,12 @@ class BaseResource:
                     id=id
                 )
             )
-        self.notify_obj_event(obj, 'GET')
-        return self.attach_request(obj)
+        return obj
 
-    def get_records(self):
-        """Get all records for this resource and return a dictionary.
+    def _get_records_query(self):
+        """Return a base query for records.
 
-        :return: dict
+        :return: tuple
         """
         query_params = self.request.GET
         query = self._get_base_query()
@@ -215,23 +238,49 @@ class BaseResource:
         # Apply filters
         query = self.filter_query(query, query_params)
 
+        # Apply security
+        if self.enable_security:
+            query = self.apply_security(query, permission='view')
+
         # Apply sorting
         query = self.sort_query(query, query_params)
+        return query, query_params
 
-        total = query.count()
-        records = [self.attach_request(record) for record in query.all()]
+    def get_records(self):
+        """Get all records for this resource and return a dictionary.
 
-        for record in records:
-            self.notify_obj_event(record, 'GET')
+        :return: dict
+        """
+        query, query_params = self._get_records_query()
+        pagination = self.paginate(query, query_params)
+        return pagination
 
-        return {
-            'total': total,
-            'data': records
-        }
+    def count_records(self) -> int:
+        """Count records for a request.
+
+        :return: Count of records to be returned
+        """
+        query, query_params = self._get_records_query()
+        return query.count()
+
+    def get_column_from_key(self, query, key):
+        """Get a column and join based on a key.
+
+        :return: A new query with a join with necessary,
+                 A column in the own model or from a related one
+        """
+        if '.' in key:
+            relationship_column_name, field = key.split('.')
+            query = query.join(relationship_column_name)
+            column = getattr(self.model, relationship_column_name, None)
+            column = getattr(column.property.mapper.c, field, None)
+        else:
+            column = getattr(self.model, key, None)
+
+        return query, column
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
-        model = self.model
         try:
             raw_filters = filter.create_filter_from_query_params(
                 query_params,
@@ -249,8 +298,7 @@ class BaseResource:
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
-
-            column = getattr(model, key, None)
+            query, column = self.get_column_from_key(query, key)
 
             if value == 'null':
                 value = None
@@ -261,17 +309,18 @@ class BaseResource:
             if not attrs:
                 error_details = {
                     'location': 'querystring',
-                    'description': "Invalid filter operator: '{op}'".format(op)
+                    'description': "Invalid filter operator: '{op}'".format(op=op)
                 }
                 self.raise_invalid(**error_details)
             else:
                 filt = attrs[0](value)
+
             query = query.filter(filt)
+
         return query
 
     def sort_query(self, query, query_params=None):
         """Apply request sorting to a query."""
-        model = self.model
         try:
             raw_sorting = filter.create_sorting_from_query_params(
                 query_params,
@@ -290,12 +339,21 @@ class BaseResource:
         for sorting in raw_sorting:
             key = sorting.field
             direction = sorting.direction
-            column = getattr(model, key, None)
             func = sa.asc
             if direction == -1:
                 func = sa.desc
+            query, column = self.get_column_from_key(query, key)
             query = query.order_by(func(column))
         return query
+
+    def paginate(self, query, query_params: dict=None):
+        """Pagination."""
+        if '_items_per_page' not in query_params:
+            query_params['_items_per_page'] = str(self.items_per_page)
+        params = paginate.extract_pagination_from_query_params(query_params)
+        params['collection'] = query
+        pagination = paginate.SQLPage(**params)
+        return pagination()
 
 
 class RESTService(BaseResource):
@@ -306,6 +364,19 @@ class RESTService(BaseResource):
     _required_fields = (
         ('PUT', tuple()),
     )
+
+    _columns_map = ()
+    """Tuple with all metadata about the fields returned in the listing set payload.
+
+    This data will be available in the payload as "columns" attribute.
+    Ex::
+
+        _column_map = (
+            {'field': 'country', 'label': 'Country', 'type': 'country', 'url': '', 'filter': ''},
+            {'field': 'total', 'label': 'Total', 'type': 'integer', 'url': '', 'filter': ''},
+        )
+
+    """
 
     _default_notify_events = {
         'POST': events.ObjectCreatedEvent,
@@ -319,7 +390,7 @@ class RESTService(BaseResource):
         """Schema for write operations."""
         colander_config = self.model.__colanderalchemy_config__
         excludes = colander_config.get('excludes', self.default_excludes)
-        return SQLAlchemySchemaNode(
+        return data.BriefySchemaNode(
             self.model, unknown='ignore', excludes=excludes
         )
 
@@ -344,7 +415,7 @@ class RESTService(BaseResource):
                 child.default = colander.null
         return schema
 
-    @view(validators='_run_validators', permission='add')
+    @view(validators='_run_validators', permission='create')
     def collection_post(self):
         """Add a new instance.
 
@@ -363,7 +434,6 @@ class RESTService(BaseResource):
 
         session = self.session
         obj = model(**payload)
-        obj = self.attach_request(obj)
         session.add(obj)
         session.flush()
         self.notify_obj_event(obj, 'POST')
@@ -373,8 +443,8 @@ class RESTService(BaseResource):
     def collection_head(self):
         """Return the header with total objects for this request."""
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
+        total_records = self.count_records()
+        headers['Total-Records'] = '{total}'.format(total=total_records)
 
     @view(validators='_run_validators', permission='list')
     def collection_get(self):
@@ -383,26 +453,29 @@ class RESTService(BaseResource):
         :returns: Payload with total records and list of objects
         """
         headers = self.request.response.headers
-        records = self.get_records()
-        headers['Total-Records'] = '{total}'.format(total=records['total'])
-        collection = records['data']
-        return {
-            'total': records['total'],
-            'data': collection,
-        }
+        pagination = self.get_records()
+        total = pagination['total']
+        headers['Total-Records'] = '{total}'.format(total=total)
+        # Force in here to use the listing serialization.
+        pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
+        # also append columns metadata if available
+        columns_map = self._columns_map
+        if columns_map:
+            pagination['columns'] = columns_map
+        return pagination
 
     @view(validators='_run_validators', permission='view')
     def get(self):
         """Get an instance of the model object."""
         id = self.request.matchdict.get('id', '')
-        obj = self.get_one(id)
+        obj = self.get_one(id, permission='view')
         return obj
 
     @view(validators='_run_validators', permission='edit')
     def put(self):
         """Update an existing object."""
         id = self.request.matchdict.get('id', '')
-        obj = self.get_one(id)
+        obj = self.get_one(id, permission='edit')
         obj.update(self.request.validated)
         self.session.flush()
         self.notify_obj_event(obj, 'PUT')
@@ -410,8 +483,8 @@ class RESTService(BaseResource):
 
     @view(permission='delete')
     def delete(self):
-        """Soft delete an object if there is an apropriate transition for it."""
-        obj = self.get_one(id)
+        """Soft delete an object if there is an appropriated transition for it."""
+        obj = self.get_one(id, permission='delete')
         # We do not delete things from the Database -
         # The delete event should be enough to trigger
         # transitions that will set a delete-like
@@ -435,10 +508,30 @@ class WorkflowAwareResource(BaseResource):
             return workflow
         return None
 
+    def _fields_schema(self, transition):
+        """Return a schema to handle fields payload."""
+        schema = None
+        includes = transition.required_fields
+        if includes:
+            schema = data.BriefySchemaNode(
+                self.model, unknown='ignore', includes=includes
+            )
+            schema.name = 'fields'
+        return schema
+
     @property
     def schema_post(self):
         """Schema for write operations."""
-        return data.WorkflowTransitionSchema(unknown='ignore')
+        body = self.request.json_body
+        payload = body if body else self.request.POST
+        transition_id = payload.get('transition')
+        workflow = self.workflow
+        transition = workflow.transitions.get(transition_id)
+        schema = data.WorkflowTransitionSchema(unknown='ignore')
+        fields = self._fields_schema(transition)
+        if fields:
+            schema.children.append(fields)
+        return schema
 
     @view(validators='_run_validators')
     def collection_post(self):
@@ -446,38 +539,37 @@ class WorkflowAwareResource(BaseResource):
 
         :returns: Newly created instance
         """
-        request = self.request
         transition = self.request.validated['transition']
         message = self.request.validated.get('message', '')
+        fields = self.request.validated.get('fields', {})
         workflow = self.workflow
+        valid_transitions_list = str(list(workflow.transitions))
+        if transition in valid_transitions_list:
+            # Execute transition
+            try:
+                transition_method = getattr(workflow, transition, None)
+                if isinstance(transition_method, AttachedTransition):
+                    transition_method(message=message, fields=fields)
 
-        # Execute transition
-        try:
-            transition_method = getattr(workflow, transition, None)
-            if isinstance(transition_method, AttachedTransition):
-                transition_method(message=message)
+                    response = {
+                        'status': True,
+                        'message': 'Transition executed: {id}'.format(id=transition)
+                    }
 
-                wf_event = events.WorkflowTranstionEvent(workflow.document,
-                                                         request,
-                                                         transition_method)
-                request.registry.notify(wf_event)
-                # also execute the event to dispatch to sqs if needed
-                wf_event()
-
-                response = {
-                    'status': True,
-                    'message': 'Transition executed: {id}'.format(id=transition)
-                }
-
-                return response
-            else:
-                msg = 'Transition not found: {id}'.format(id=transition)
-                raise NotFound(msg)
-        except WorkflowPermissionException:
-            msg = 'Unauthorized transition: {id}'.format(id=transition)
-            raise Unauthorized(msg)
-        except WorkflowTransitionException:
-            valid_transitions_list = str(list(workflow.transitions))
+                    return response
+                else:
+                    msg = 'Transition not found: {id}'.format(id=transition)
+                    raise NotFound(msg)
+            except WorkflowPermissionException:
+                msg = 'Unauthorized transition: {id}'.format(id=transition)
+                raise Unauthorized(msg)
+            except WorkflowTransitionException as exc:
+                msg = str(exc)
+                field = 'fields'
+                if 'Message' in str(exc):
+                    field = 'message'
+                self.raise_invalid('body', field, msg)
+        else:
             state = workflow.state.name
             msg = 'Invalid transition: {id} (for state: {state}). ' \
                   'Your valid transitions list are: {transitions}'

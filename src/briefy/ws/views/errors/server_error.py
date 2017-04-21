@@ -1,5 +1,6 @@
-"""Views for briefy.ws."""
+"""HTTP Errors 50x view for Briefy APIs using briefy.ws."""
 from briefy.ws import logger
+from pyramid.request import Request
 from pyramid.response import Response
 from pyramid.view import view_config
 
@@ -7,17 +8,28 @@ import json
 
 
 @view_config(context=Exception)
-def server_error(exc, request):
+def server_error(exc: Exception, request: Request) -> Response:
     """View overriding default 500 error page.
 
     :param exc: A 500 exception
-    :type exc: :class:`pyramid.httpexceptions.HTTPNotFound`
     :param request: A request object
-    :type request: request
     :returns: A response object with a application/json formatted body
-    :rtype: :class:`pyramid.response.Response`
     """
-    logger.warning('Exception raised: \n {}'.format(exc))
+    try:
+        payload = request.json_body
+    except json.JSONDecodeError:
+        payload = {}
+
+    logger.error(
+        '{error} occurred on url {url}'.format(
+            error=exc.__class__.__name__,
+            url=request.url
+        ),
+        extra={
+            'payload': payload
+        },
+        exc_info=exc
+    )
     msg = 'Something went terribly wrong and now we need to wake up a sysadmin'
     body = {'status': 'error', 'message': msg, 'url': request.url}
     response = Response(json.dumps(body))

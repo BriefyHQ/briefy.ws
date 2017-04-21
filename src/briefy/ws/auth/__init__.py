@@ -5,6 +5,7 @@ from pyramid.httpexceptions import HTTPUnauthorized as BaseHTTPUnauthorized
 from webob import Response
 
 import json
+import newrelic.agent
 
 
 class AuthenticatedUser(BaseUser):
@@ -37,6 +38,10 @@ def user_factory(request) -> AuthenticatedUser:
     user_id = request.authenticated_userid
     if user_id:
         data = request.jwt_claims
+        # add all user data to the newrelic custom attributes
+        newrelic.agent.add_custom_parameter('user_id', user_id)
+        for key, value in data.items():
+            newrelic.agent.add_custom_parameter(key, str(value))
         return AuthenticatedUser(user_id, data)
     else:
         return None
@@ -53,7 +58,7 @@ def groupfinder(userid, request):
     return request.jwt_claims.get('groups', [])
 
 
-def validate_jwt_token(request):
+def validate_jwt_token(request, **kwargs):
     """Use pyramid JWT to validate if the user is authenticated."""
     user_id = request.authenticated_userid
     if user_id is None:

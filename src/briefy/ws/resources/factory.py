@@ -1,13 +1,11 @@
 """Context base factory for cornice resources."""
-
-from pyramid.authentication import Authenticated
 from pyramid.authorization import Allow
 
 import uuid
 
 
 __base_admin_acl__ = [
-    (Allow, Authenticated, ['add', 'delete', 'edit', 'list', 'view'])
+    (Allow, 'g:briefy', ['list', 'view'])
     ]
 
 
@@ -44,9 +42,33 @@ class BaseFactory(object):
         permissions.extend(__base_admin_acl__)
         # ACL for each Factory
         permissions.extend(self.__base_acl__)
-        # Computed acl
+        # Computed acl from model
+        permissions.extend(self.model_permissions)
+        # Computed acl from workflow
         permissions.extend(self.workflow_permissions)
         return permissions
+
+    @property
+    def model_permissions(self) -> list:
+        """Get permissions defined on model level."""
+        model = self.model
+        if model:
+            return [(Allow, role, permissions) for role, permissions in model.__acl__()]
+        else:
+            return []
+
+    def has_global_permissions(self, permission, roles) -> bool:
+        """Return true if the permission is global in the model level."""
+        model = self.model
+        if not model:
+            return False
+        raw_acl = self.model.__raw_acl__
+        for acl_permissions, acl_roles in raw_acl:
+            if acl_permissions == permission:
+                for role in roles:
+                    if role in acl_roles:
+                        return True
+                break
 
     @property
     def workflow_permissions(self) -> list:

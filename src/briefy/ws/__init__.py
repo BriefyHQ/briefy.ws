@@ -1,14 +1,14 @@
 """Briefy microservices helper."""
 from .initialization import initialize  # noqa
 from .renderer import JSONRenderer
-from briefy.ws.config import JWT_EXPIRATION
-from briefy.ws.config import JWT_SECRET
 from briefy.ws.auth import groupfinder
 from briefy.ws.auth import user_factory
+from briefy.ws.config import JWT_EXPIRATION
+from briefy.ws.config import JWT_SECRET
 from pyramid.authorization import ACLAuthorizationPolicy
 
-import os
 import logging
+import os
 
 
 CORS_POLICY = {
@@ -32,24 +32,25 @@ def expandvars_dict(settings):
 def includeme(config):
     """Configuration to be included by other services."""
     # Setup cornice.
-    config.include("cornice")
+    config.include('cornice')
 
     # add default renderer
     config.add_renderer('json', JSONRenderer())
 
     # Per-request transaction.
-    config.include("pyramid_tm")
+    config.include('pyramid_tm')
 
     # config jwt
     config.set_authorization_policy(ACLAuthorizationPolicy())
     config.include('pyramid_jwt')
-    config.set_jwt_authentication_policy(private_key=JWT_SECRET,
-                                         expiration=int(JWT_EXPIRATION),
-                                         callback=groupfinder,
-                                         )
+    config.set_jwt_authentication_policy(
+        private_key=JWT_SECRET,
+        expiration=int(JWT_EXPIRATION),
+        callback=groupfinder,
+    )
 
     # add authenticated user map as request attribute
     config.add_request_method(user_factory, 'user', reify=True)
 
     # Scan views.
-    config.scan("briefy.ws.views")
+    config.scan('briefy.ws.views')

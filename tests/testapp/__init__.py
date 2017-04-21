@@ -5,7 +5,7 @@ from pyramid.config import Configurator
 def includeme(config):
     """Custom routes and scan app."""
     config.add_route('login', '/login')
-    config.scan("tests.testapp.views")
+    config.scan('tests.testapp.views')
 
 
 def main(settings=None, config=None, *args, **additional_settings):
