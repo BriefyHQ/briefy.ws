@@ -6,6 +6,7 @@ from enum import Enum
 
 import re
 
+
 UPDATED_AT = 'updated_at'
 
 Filter = namedtuple('Filter', ['field', 'value', 'operator'])

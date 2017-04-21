@@ -1,5 +1,5 @@
-from briefy.ws.resources import RESTService
 from briefy.ws.resources import events
+from briefy.ws.resources import RESTService
 from pyramid.testing import DummyRequest
 from unittest.mock import Mock
 

@@ -1,5 +1,5 @@
 language: python
-python: 3.5
+python: 3.6
 sudo: false
 branches:
   only:
@@ -11,12 +11,11 @@ env:
   global:
   - JWT_SECRET=e68d4ffb-d621-4d17-a33e-00183e9553e1 JWT_EXPIRATION=84600
   matrix:
-  - TOXENV=py35
+  - TOXENV=py36
 install:
 - pip install -r requirements/dev.txt
 script:
-- tox -e ${TOXENV}
-- make lint
+- make test
 after_success:
 - make docs
 notifications:

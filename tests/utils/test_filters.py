@@ -1,6 +1,6 @@
 """Test filtering utils."""
-from briefy.ws.utils import filter
 from briefy.ws.errors import ValidationError
+from briefy.ws.utils import filter
 
 import pytest
 

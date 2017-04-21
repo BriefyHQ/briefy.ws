@@ -11,9 +11,9 @@ from briefy.ws.utils import data
 from briefy.ws.utils import filter
 from briefy.ws.utils import paginate
 from briefy.ws.utils import user
-from cornice.validators import colander_body_validator
-from cornice.util import json_error
 from cornice.resource import view
+from cornice.util import json_error
+from cornice.validators import colander_body_validator
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
@@ -309,7 +309,7 @@ class BaseResource:
             if not attrs:
                 error_details = {
                     'location': 'querystring',
-                    'description': "Invalid filter operator: '{op}'".format(op)
+                    'description': "Invalid filter operator: '{op}'".format(op=op)
                 }
                 self.raise_invalid(**error_details)
             else:
