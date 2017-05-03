@@ -174,7 +174,10 @@ class BaseResource:
         if 'Briefy-SyncBot' in request.headers.get('User-Agent', ''):
             return
         method = method or request.method
-        event_klass = self._default_notify_events.get(method)
+        if getattr(obj, '_default_notify_events', None):
+            event_klass = obj._default_notify_events.get(method)
+        else:
+            event_klass = self._default_notify_events.get(method)
         if event_klass:
             event = event_klass(obj, request)
             request.registry.notify(event)
@@ -416,14 +419,14 @@ class RESTService(BaseResource):
         return schema
 
     @view(validators='_run_validators', permission='create')
-    def collection_post(self):
+    def collection_post(self, model=None):
         """Add a new instance.
 
         :returns: Newly created instance
         """
         request = self.request
         payload = request.validated
-        model = self.model
+        model = model if model else self.model
 
         # verify if object with same ID exists
         obj_id = payload.get('id')
