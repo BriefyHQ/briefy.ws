@@ -174,6 +174,7 @@ class BaseResource:
         if 'Briefy-SyncBot' in request.headers.get('User-Agent', ''):
             return
         method = method or request.method
+        # if the model defines the events it takes precedence from the service definition
         if getattr(obj, '_default_notify_events', None):
             event_klass = obj._default_notify_events.get(method)
         else:
