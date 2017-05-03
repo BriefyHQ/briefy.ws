@@ -2,7 +2,12 @@
 History
 =======
 
-2.0.0 (Unreleased)
+2.0.1 (2017-05-03)
+------------------
+    * Lookup for _default_notify_events on the model before look in the resource view (rudaporto).
+    * Added to RESTService.collection_post a new parameter (model) to override the model used to create new instance (rudaporto).
+
+2.0.0 (2017-04-21)
 ------------------
     * BODY-62: Implement Pagination on BaseResource (ericof).
     * BODY-64: Add like filter. (ericof)

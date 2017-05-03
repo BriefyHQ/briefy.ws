@@ -76,6 +76,9 @@ class Request(DummyRequest):
 
 
 class Model:
+
+    _default_notify_events = None
+
     def __init__(self, **kw):
         self.id = 1
 
@@ -88,49 +91,49 @@ class Model:
 
 
 def test_base_resource_triggers_get_events(login):
-    r = Request()
+    req = Request()
     c = ContextMock()
-    b = RESTService(c, r)
+    b = RESTService(c, req)
 
-    assert b.request is r
+    assert b.request is req
     assert b.context is c
 
 
 def test_base_resource_get(login):
-    r = Request()
+    req = Request()
     c = ContextMock()
-    b = RESTService(c, r)
+    b = RESTService(c, req)
     b.model = Model()
 
     b.get()
-    assert len(r.registry.notifications) == 0
+    assert len(req.registry.notifications) == 0
 
 
 def test_base_resource_post(login):
-    r = Request()
+    req = Request()
     c = ContextMock()
-    b = RESTService(c, r)
+    b = RESTService(c, req)
     b.model = Model()
 
     b.collection_post()
-    assert isinstance(r.registry.notifications[0], events.ObjectCreatedEvent)
+    assert isinstance(req.registry.notifications[0], events.ObjectCreatedEvent)
 
 
 def test_base_resource_put(login):
-    r = Request()
+    req = Request()
     c = ContextMock()
-    b = RESTService(c, r)
+    b = RESTService(c, req)
     b.model = Model()
 
     b.put()
-    assert isinstance(r.registry.notifications[0], events.ObjectUpdatedEvent)
+    assert isinstance(req.registry.notifications[0], events.ObjectUpdatedEvent)
 
 
 def test_base_resource_delete(login):
-    r = Request()
+    req = Request()
     c = ContextMock()
-    b = RESTService(c, r)
+    b = RESTService(c, req)
     b.model = Model()
     b.delete()
 
-    assert isinstance(r.registry.notifications[0], events.ObjectDeletedEvent)
+    assert isinstance(req.registry.notifications[0], events.ObjectDeletedEvent)
