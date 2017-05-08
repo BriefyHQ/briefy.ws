@@ -451,7 +451,7 @@ class RESTService(BaseResource):
             logger.exception(
                 'Error creating an instance of {klass}'.format(klass=model.__name__)
             )
-            raise ValueError()
+            raise ValueError from e
         else:
             session.add(obj)
             session.flush()
@@ -511,7 +511,7 @@ class RESTService(BaseResource):
                     klass=obj.__class__.__name__
                 )
             )
-            raise ValueError()
+            raise ValueError from e
         else:
             self.session.flush()
             self.notify_obj_event(obj, 'PUT')
