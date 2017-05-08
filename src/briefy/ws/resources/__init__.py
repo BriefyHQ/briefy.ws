@@ -3,6 +3,7 @@ from briefy.common.db.mixins import LocalRolesMixin
 from briefy.common.workflow.base import AttachedTransition
 from briefy.common.workflow.exceptions import WorkflowPermissionException
 from briefy.common.workflow.exceptions import WorkflowTransitionException
+from briefy.ws import logger
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
@@ -446,7 +447,12 @@ class RESTService(BaseResource):
                 'name': e.name
             }
             self.raise_invalid(**error_details)
-        finally:
+        except Exception as e:
+            logger.exception(
+                'Error creating an instance of {klass}'.format(klass=model.__name__)
+            )
+            raise ValueError()
+        else:
             session.add(obj)
             session.flush()
             self.notify_obj_event(obj, 'POST')
@@ -498,7 +504,15 @@ class RESTService(BaseResource):
                 'name': e.name
             }
             self.raise_invalid(**error_details)
-        finally:
+        except Exception as e:
+            logger.exception(
+                'Error updating an instance {id} of {klass}'.format(
+                    id=obj.id,
+                    klass=obj.__class__.__name__
+                )
+            )
+            raise ValueError()
+        else:
             self.session.flush()
             self.notify_obj_event(obj, 'PUT')
             return obj
