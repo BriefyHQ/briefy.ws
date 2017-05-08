@@ -2,6 +2,11 @@
 History
 =======
 
+2.0.2 (Unreleased)
+------------------
+
+    * Handle ValidationError on collection_post and put  (ericof).
+
 2.0.1 (2017-05-03)
 ------------------
     * Lookup for _default_notify_events on the model before look in the resource view (rudaporto).
