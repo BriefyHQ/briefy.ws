@@ -437,11 +437,20 @@ class RESTService(BaseResource):
                 self.raise_invalid('body', 'id', 'Duplicate object UUID: {id}'.format(id=obj_id))
 
         session = self.session
-        obj = model(**payload)
-        session.add(obj)
-        session.flush()
-        self.notify_obj_event(obj, 'POST')
-        return obj
+        try:
+            obj = model(**payload)
+        except ValidationError as e:
+            error_details = {
+                'location': e.location,
+                'description': e.message,
+                'name': e.name
+            }
+            self.raise_invalid(**error_details)
+        finally:
+            session.add(obj)
+            session.flush()
+            self.notify_obj_event(obj, 'POST')
+            return obj
 
     @view(validators='_run_validators', permission='list')
     def collection_head(self):
@@ -480,10 +489,19 @@ class RESTService(BaseResource):
         """Update an existing object."""
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id, permission='edit')
-        obj.update(self.request.validated)
-        self.session.flush()
-        self.notify_obj_event(obj, 'PUT')
-        return obj
+        try:
+            obj.update(self.request.validated)
+        except ValidationError as e:
+            error_details = {
+                'location': e.location,
+                'description': e.message,
+                'name': e.name
+            }
+            self.raise_invalid(**error_details)
+        finally:
+            self.session.flush()
+            self.notify_obj_event(obj, 'PUT')
+            return obj
 
     @view(permission='delete')
     def delete(self):
