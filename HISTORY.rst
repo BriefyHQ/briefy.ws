@@ -6,6 +6,7 @@ History
 ------------------
 
     * Handle ValidationError on collection_post and put  (ericof).
+    * Change newrelic transaction name to use instance class and module name (rudaporto).
 
 2.0.1 (2017-05-03)
 ------------------
