@@ -3,6 +3,7 @@ from briefy.common.db.mixins import LocalRolesMixin
 from briefy.common.workflow.base import AttachedTransition
 from briefy.common.workflow.exceptions import WorkflowPermissionException
 from briefy.common.workflow.exceptions import WorkflowTransitionException
+from briefy.ws import logger
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources import events
@@ -18,6 +19,7 @@ from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
 import colander
+import newrelic.agent
 import sqlalchemy as sa
 
 
@@ -38,6 +40,13 @@ class BaseResource:
         """Initialize the service."""
         self.context = context
         self.request = request
+        cls_ = self.__class__
+        self._transaction_name = '{0}:{1}'.format(cls_.__module__, cls_.__name__)
+
+    def set_transaction_name(self, suffix):
+        """Set newrelic transaction name."""
+        name = '{0}.{1}'.format(self._transaction_name, suffix)
+        newrelic.agent.set_transaction_name(name, 'WebService')
 
     @property
     def session(self):
@@ -425,6 +434,7 @@ class RESTService(BaseResource):
 
         :returns: Newly created instance
         """
+        self.set_transaction_name('collection_post')
         request = self.request
         payload = request.validated
         model = model if model else self.model
@@ -437,15 +447,30 @@ class RESTService(BaseResource):
                 self.raise_invalid('body', 'id', 'Duplicate object UUID: {id}'.format(id=obj_id))
 
         session = self.session
-        obj = model(**payload)
-        session.add(obj)
-        session.flush()
-        self.notify_obj_event(obj, 'POST')
-        return obj
+        try:
+            obj = model(**payload)
+        except ValidationError as e:
+            error_details = {
+                'location': e.location,
+                'description': e.message,
+                'name': e.name
+            }
+            self.raise_invalid(**error_details)
+        except Exception as e:
+            logger.exception(
+                'Error creating an instance of {klass}'.format(klass=model.__name__)
+            )
+            raise ValueError from e
+        else:
+            session.add(obj)
+            session.flush()
+            self.notify_obj_event(obj, 'POST')
+            return obj
 
     @view(validators='_run_validators', permission='list')
     def collection_head(self):
         """Return the header with total objects for this request."""
+        self.set_transaction_name('collection_head')
         headers = self.request.response.headers
         total_records = self.count_records()
         headers['Total-Records'] = '{total}'.format(total=total_records)
@@ -456,6 +481,7 @@ class RESTService(BaseResource):
 
         :returns: Payload with total records and list of objects
         """
+        self.set_transaction_name('collection_get')
         headers = self.request.response.headers
         pagination = self.get_records()
         total = pagination['total']
@@ -471,6 +497,7 @@ class RESTService(BaseResource):
     @view(validators='_run_validators', permission='view')
     def get(self):
         """Get an instance of the model object."""
+        self.set_transaction_name('get')
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id, permission='view')
         return obj
@@ -478,16 +505,35 @@ class RESTService(BaseResource):
     @view(validators='_run_validators', permission='edit')
     def put(self):
         """Update an existing object."""
+        self.set_transaction_name('put')
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id, permission='edit')
-        obj.update(self.request.validated)
-        self.session.flush()
-        self.notify_obj_event(obj, 'PUT')
-        return obj
+        try:
+            obj.update(self.request.validated)
+        except ValidationError as e:
+            error_details = {
+                'location': e.location,
+                'description': e.message,
+                'name': e.name
+            }
+            self.raise_invalid(**error_details)
+        except Exception as e:
+            logger.exception(
+                'Error updating an instance {id} of {klass}'.format(
+                    id=obj.id,
+                    klass=obj.__class__.__name__
+                )
+            )
+            raise ValueError from e
+        else:
+            self.session.flush()
+            self.notify_obj_event(obj, 'PUT')
+            return obj
 
     @view(permission='delete')
     def delete(self):
         """Soft delete an object if there is an appropriated transition for it."""
+        self.set_transaction_name('delete')
         obj = self.get_one(id, permission='delete')
         # We do not delete things from the Database -
         # The delete event should be enough to trigger
@@ -543,6 +589,7 @@ class WorkflowAwareResource(BaseResource):
 
         :returns: Newly created instance
         """
+        self.set_transaction_name('collection_post')
         transition = self.request.validated['transition']
         message = self.request.validated.get('message', '')
         fields = self.request.validated.get('fields', {})
@@ -585,6 +632,7 @@ class WorkflowAwareResource(BaseResource):
     @view(validators='_run_validators')
     def collection_get(self):
         """Return the list of available transitions for this user in this object."""
+        self.set_transaction_name('collection_get')
         response = {
             'transitions': [],
             'total': 0
