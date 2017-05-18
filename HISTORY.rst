@@ -2,7 +2,7 @@
 History
 =======
 
-2.0.2 (Unreleased)
+2.0.2 (2017-05-18)
 ------------------
 
     * Handle ValidationError on collection_post and put  (ericof).
