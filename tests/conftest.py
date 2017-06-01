@@ -6,6 +6,7 @@ from zope.configuration.xmlconfig import XMLConfig
 
 import pytest
 
+
 XMLConfig('configure.zcml', common)()
 
 

@@ -1,19 +1,24 @@
 """Main view for the service."""
-
 from cornice import Service
+from pyramid.request import Request
 from pyramid.security import Authenticated
 from pyramid.security import NO_PERMISSION_REQUIRED
 
+
 hello = Service(
-    name="hello",
+    name='hello',
     path='/',
-    description="Welcome"
+    description='Welcome'
 )
 
 
 @hello.get(permission=NO_PERMISSION_REQUIRED)
-def get_hello(request):
-    """Return information regarding the current instance."""
+def get_hello(request: Request) -> dict:
+    """View providing information regarding the current Microservice instance.
+
+    :param request: Incoming request.
+    :returns: Dict with data about this service.
+    """
     settings = request.registry.settings
     project_name = settings['project_name']
     project_version = settings['project_version']

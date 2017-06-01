@@ -39,7 +39,6 @@ def test__get_user_info_from_service(testapp):
 
 def test__get_user_info_from_service_not_found(testapp):
     """Test _get_user_info_from_service function for a non existing user."""
-
     user_id = 'fake'
     with httmock.HTTMock(mock_rolleiflex):
         data = user._get_user_info_from_service(user_id)

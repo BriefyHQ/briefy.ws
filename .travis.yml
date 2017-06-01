@@ -1,5 +1,5 @@
 language: python
-python: 3.5
+python: 3.6
 sudo: false
 branches:
   only:
@@ -11,13 +11,22 @@ env:
   global:
   - JWT_SECRET=e68d4ffb-d621-4d17-a33e-00183e9553e1 JWT_EXPIRATION=84600
   matrix:
-  - TOXENV=py35
+  - TOXENV=py36
 install:
 - pip install -r requirements/dev.txt
 script:
-- tox -e ${TOXENV}
-- make lint
+- make test
 after_success:
 - make docs
 notifications:
   slack: briefy:qxjOPwcrGEtVx3aCQBr812t9
+addons:
+  artifacts:
+    key:
+      secure: FmMU1+yRcdFiQlhY1C/QqgwA+/0UEm8tnXcHrfuXeg3WH+XgRcmKVvc8DLBgDukvGEjch1ujTm7OA7EVd6DYt1v6MBvP7QONtb2hYlGmR1htzXNX2tH0Xaw4/STkDYLM9N3hgamIu4tcpFEPgLF7OvhelEiAxPKTo1qdEbPOs3E40GABS32bDmhi8jCRCLesrsSfGbfJs4wHnuBp0YOzZG3L2SFQnUq9rPqdDYTyQgGNFIULOY4snGTznHwOLyI67LxkVWMZux8zVYt0ZPGZnXX3SPQ8LoFFn6BsvZMkPEzdSiGcFCD1HVzCRZgk4rdAYznFZzDbkCeOapSBMUOuWLTk0w5FSRH4Rvr7rTiP64NSW02JkIcuGoS9ygA13dEkDm7p70dmpRCEA4Iag++o+Wik/39kwEXCc//O+m5gkluxzjq9AeoM26+2Hy+rY0oPW97NQ7bQwW0bs0uVHVtQxn1cHrhiwTjkYzW+3K4xegqS5qXrAnpNHOj+whwklNmIcPEcUFa8Jm5uWFoD2EtbTfyhNqFP7aFHg5juJPdFpPhViljBBFRhnD+ZfQ8AhHB+7Qs7FpOk64sCLh9lxgC4M95tChoh6qlFa2//DmWgvNol03IgkTfDebFFC7OaqwjmvkyDz/cRtpWGB3qfgaU2dtw+75P3gvQknq19xTm4NOQ=
+    secret:
+      secure: DPKAURP7y56YrdavAliRAZ9xlJYOJTenab1SRKlgDYiJCs9S38XryGFQYClxVMZVR0Sm39wltth/AKEa6WhYEHR3VtYY9wDWVweYLWjXWT3deIl+Do2cK3r8fRK8jay9hONJ111CWECtv23qqtCZVv3MG3B4aWIPOw43pld17OtzicE6PaPSqYzn8wYqWOEd0jhshSUB18PBBs6XtJrTPhYK0jhXFunliPN74kFSz/oFJIQkeofslh/goGxzYxHq500JGsVboAF4f13S6rlrct/zAlMfSi5CsUCzQRu3c0UguNNnrlJs0rMGbIHjXzCMgcd/oFV7Kfw0RK/sU7+RvvqAdBkGGy0eAUHqksdKLtqK8WjDkI+GzOZbkicILYbQrsK4MvsoCwQPdc39yVsznt0M1s1kEo1OF+5dr6DKrXLtUx1zt3YbU/t2ig3H4bfJOVI8FyzZRkcKJSjumJbfdhlsp8dxKyIlF8OtuMUB2M30LLYhlDdJ9L356U3fkAuQvcKplMccSMeuN4JlzRbPFzSrfcEz+9za4zQopZdaQNvjpaHUx/H+0h0ISgzor/41D/g+JzXZYtVcziRbGYsB4u/9nCQLFCTpjHV7PHoRCBge+IvjzQEky4ZxsE+nRP5tGtKp5lAeC6lhyGoD8kbhS0zx4YefyRwAe4N3bZLCleU=
+    bucket: briefy-dev-docs
+    target_paths: briefy.ws
+    paths:
+      - docs/_build/dirhtml/

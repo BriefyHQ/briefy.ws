@@ -29,7 +29,7 @@ def error_403(request):
 success = Service(
     name='success',
     path='/success',
-    description="Simplest app"
+    description='Simplest app'
 )
 
 
@@ -42,34 +42,36 @@ def get_info(request):
 protected = Service(
     name='protected',
     path='/protected',
-    description="Protected view"
+    description='Protected view'
 )
 
 
 @view_config(route_name='login', renderer='json')
 def login_view(request):
     user = {
-        "locale": "en_GB",
-        "id": "669a99c2-9bb3-443f-8891-e600a15e3c10",
-        "fullname": "Person Lastname",
-        "first_name": "Person",
-        "email": "person@gmail.com",
-        "last_name": "Lastname",
-        "groups": ["g:briefy_pms", "g:briefy_qa"]
+        'locale': 'en_GB',
+        'id': '669a99c2-9bb3-443f-8891-e600a15e3c10',
+        'fullname': 'Person Lastname',
+        'first_name': 'Person',
+        'email': 'person@gmail.com',
+        'last_name': 'Lastname',
+        'groups': ['g:briefy_pms', 'g:briefy_qa']
     }
     token = request.create_jwt_token(user.get('id'), **user)
-    result = dict(token=token,
-                  status='200',
-                  message='Authentication success',
-                  provider='email',
-                  user=user)
-    return result
+    return {
+        'token': token,
+        'status': '200',
+        'message': 'Authentication success',
+        'provider': 'email',
+        'user': user
+    }
 
 
 @protected.get(validators=validate_jwt_token)
 def get_protected(request):
     """Returns protected information when the user is authenticated."""
-    return {'status': 'success',
-            'message': 'Protected information.',
-            'user': request.user.to_dict(),
-            }
+    return {
+        'status': 'success',
+        'message': 'Protected information.',
+        'user': request.user.to_dict(),
+    }

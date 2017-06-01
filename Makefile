@@ -64,6 +64,11 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
+clean-docs:
+	rm -rf $(BUILDDIR)/*
+	rm -f docs/codebase/briefy*
+	rm -f docs/codebase/modules.rst
+
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage
@@ -71,32 +76,28 @@ clean-test: ## remove test and coverage artifacts
 
 lint: ## check style with flake8
 	flake8 src/briefy/ws setup.py
-	flake8 --ignore=D102,D103,D205,D101,D400,D210,D401,D100,D202,D104 tests
+	flake8 --ignore=D102,D103,D205,D101,D400,D210,D401,D100 tests
 
 test: lint ## run tests quickly with the default Python
-	py.test --cov-report term-missing --cov=briefy.ws tests
-	
+	py.test  --cov-report term-missing --cov=briefy.ws tests
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source briefy.ws py.test
-	
+
 		coverage report -m
 		coverage html
 		$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -rf $(BUILDDIR)/*
-	rm -f docs/codebase/briefy*
-	rm -f docs/codebase/modules.rst
-	$(SPHINXAPIDOC) -o docs/codebase src/briefy
+docs: clean-docs ## generate Sphinx HTML documentation, including API docs
+	$(SPHINXAPIDOC) -M -d 1 -o docs/codebase src/briefy
 	rm -f docs/codebase/modules.rst
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 
 docs_server: docs
-	@cd $(BUILDDIR)/dirhtml; python3 -m SimpleHTTPServer 8000
+	@cd $(BUILDDIR)/dirhtml; python3 -m http.server 8000
 
 release: clean ## package and upload a release
 	python setup.py sdist upload
