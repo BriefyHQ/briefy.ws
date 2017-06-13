@@ -3,6 +3,8 @@ from briefy.ws.resources import RESTService
 from pyramid.testing import DummyRequest
 from unittest.mock import Mock
 
+import uuid
+
 
 class ContextMock:
 
@@ -75,9 +77,26 @@ class Request(DummyRequest):
     matchdict = Mock()
 
 
+class QueryMock:
+    """Mock sqlalchemy query."""
+
+    def __init__(self, model):
+        """Initilize query."""
+        self.obj = model()
+
+    def filter(self, *args, **kwargs):
+        """Filter always return same query instance."""
+        return self
+
+    def one_or_none(self, *args, **kwargs):
+        """Return model for one or none."""
+        return self.obj
+
+
 class Model:
 
     _default_notify_events = None
+    id = uuid.uuid4()
 
     def __init__(self, **kw):
         self.id = 1
@@ -88,6 +107,11 @@ class Model:
 
     def __call__(self, *args):
         return self
+
+    @classmethod
+    def query(cls, principal_id=None, permission='view'):
+        """Mock query."""
+        return QueryMock(model=cls)
 
 
 def test_base_resource_triggers_get_events(login):
@@ -103,7 +127,7 @@ def test_base_resource_get(login):
     req = Request()
     c = ContextMock()
     b = RESTService(c, req)
-    b.model = Model()
+    b.model = Model
 
     b.get()
     assert len(req.registry.notifications) == 0
@@ -113,7 +137,7 @@ def test_base_resource_post(login):
     req = Request()
     c = ContextMock()
     b = RESTService(c, req)
-    b.model = Model()
+    b.model = Model
 
     b.collection_post()
     assert isinstance(req.registry.notifications[0], events.ObjectCreatedEvent)
@@ -123,7 +147,7 @@ def test_base_resource_put(login):
     req = Request()
     c = ContextMock()
     b = RESTService(c, req)
-    b.model = Model()
+    b.model = Model
 
     b.put()
     assert isinstance(req.registry.notifications[0], events.ObjectUpdatedEvent)
@@ -133,7 +157,7 @@ def test_base_resource_delete(login):
     req = Request()
     c = ContextMock()
     b = RESTService(c, req)
-    b.model = Model()
+    b.model = Model
     b.delete()
 
     assert isinstance(req.registry.notifications[0], events.ObjectDeletedEvent)

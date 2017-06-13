@@ -5,6 +5,7 @@ History
 2.1.0 (Unreleased)
 ------------------
     * Refactor resource classes into modules and added new resources for versions and history (rudaporto).
+    * Change security database query filter to use new briefy.common Model.query parameters (rudaporto).
 
 2.0.2 (2017-05-18)
 ------------------

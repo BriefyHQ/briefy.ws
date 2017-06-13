@@ -1,5 +1,6 @@
 """Webservice base resource."""
 from briefy.common.db.mixins import LocalRolesMixin
+from briefy.ws import logger
 from briefy.ws.auth import validate_jwt_token
 from briefy.ws.errors import ValidationError
 from briefy.ws.resources.validation import validate_id
@@ -82,13 +83,30 @@ class BaseResource:
         """
         return query
 
-    def _get_base_query(self):
+    def _get_base_query(self, permission='view'):
         """Return the base query for this service.
 
         :return: Query object with default filter already applie.
         """
+        context = self.context
         model = self.model
-        query = model.query()
+        user = self.request.user
+        principal_id = self.request.user.id
+        has_global_permission = context.has_global_permissions(
+            permission, user.groups
+        )
+        kwargs = {}
+        lr_subclass = issubclass(self.model, LocalRolesMixin)
+        if self.enable_security and not has_global_permission and lr_subclass:
+            kwargs['principal_id'] = principal_id
+            kwargs['permission'] = f'can_{permission}'
+        try:
+            query = model.query(**kwargs)
+        except AttributeError:
+            msg = f'Permission attribute do not exists in model ' \
+                  f'{self.friendly_name} user: {principal_id} Parms: {kwargs}'
+            logger.error(msg)
+            raise Unauthorized(msg)
         query = self.default_filters(query)
         return query
 
@@ -191,31 +209,6 @@ class BaseResource:
             # also execute the event to dispatch to sqs if needed
             event()
 
-    def apply_security(self, query, permission):
-        """Filter objects this user is allowed to see.
-
-        :param query: Query object.
-        :return: Query object with filter applied.
-        """
-        model = self.model
-        user = self.request.user
-        has_global_permission = self.context.has_global_permissions(permission, user.groups)
-        if has_global_permission:
-            # Important: self.context (factory) identify model __raw_acl__ permissions as global.
-            # This is important to be able to give view or list permission in the context and
-            # at same time apply local role filters.
-            # When global model permission is available the query filter will be skipped.
-            pass
-        elif issubclass(model, LocalRolesMixin):
-            user_id = user.id
-            permission_attr_name = 'can_{permission}_roles'.format(permission=permission)
-            permission_attr = getattr(model, permission_attr_name, None)
-            # without filter the query will return all data so we need to raise the exception
-            if not permission_attr:
-                raise Unauthorized('Authorization error, permission not found.')
-            query = query.filter(permission_attr.any(user_id=user_id))
-        return query
-
     def get_one(self, id, permission='view'):
         """Given an id, return an instance of the model object or raise a not found exception.
 
@@ -223,9 +216,7 @@ class BaseResource:
         :return: Object
         """
         model = self.model
-        query = self._get_base_query()
-        if self.enable_security:
-            query = self.apply_security(query, permission=permission)
+        query = self._get_base_query(permission=permission)
         obj = query.filter(model.id == id).one_or_none()
 
         if not obj:
@@ -237,20 +228,16 @@ class BaseResource:
             )
         return obj
 
-    def _get_records_query(self):
+    def _get_records_query(self, permission='view'):
         """Return a base query for records.
 
         :return: tuple
         """
         query_params = self.request.GET
-        query = self._get_base_query()
+        query = self._get_base_query(permission=permission)
 
         # Apply filters
         query = self.filter_query(query, query_params)
-
-        # Apply security
-        if self.enable_security:
-            query = self.apply_security(query, permission='view')
 
         # Apply sorting
         query = self.sort_query(query, query_params)
