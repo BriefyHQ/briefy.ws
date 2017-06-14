@@ -109,6 +109,11 @@ class Model:
         return self
 
     @classmethod
+    def create(cls, payload):
+        """Create new model using payload."""
+        return Model(**payload)
+
+    @classmethod
     def query(cls, principal_id=None, permission='view'):
         """Mock query."""
         return QueryMock(model=cls)
