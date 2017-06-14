@@ -88,7 +88,7 @@ class RESTService(BaseResource):
 
         session = self.session
         try:
-            obj = model(**payload)
+            obj = model.create(payload)
         except ValidationError as e:
             error_details = {
                 'location': e.location,
@@ -102,8 +102,6 @@ class RESTService(BaseResource):
             )
             raise ValueError from e
         else:
-            session.add(obj)
-            session.flush()
             self.notify_obj_event(obj, 'POST')
             return obj
 
