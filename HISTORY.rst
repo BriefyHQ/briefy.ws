@@ -2,8 +2,9 @@
 History
 =======
 
-2.1.0 (Unreleased)
+2.0.3 (2017-06-28)
 ------------------
+
     * Refactor resource classes into modules and added new resources for versions and history (rudaporto).
 
 2.0.2 (2017-05-18)
