@@ -2,6 +2,11 @@
 History
 =======
 
+2.0.5 (2017-06-28)
+------------------
+
+    * If not a composite key, search AssociationProxy the usual way (ericof).
+
 2.0.4 (2017-06-28)
 ------------------
 

@@ -311,15 +311,16 @@ class BaseResource:
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
-            query, column, key = self.get_column_from_key(query, key)
+            query, column, sub_key = self.get_column_from_key(query, key)
 
             if value == 'null':
                 value = None
 
             possible_names = [name.format(op=op) for name in ['{op}', '{op}_', '__{op}__']]
-            if isinstance(column, AssociationProxy):
+
+            if isinstance(column, AssociationProxy) and '.' in key:
                 remote_class = column.remote_attr.prop.mapper.class_
-                dest_column = getattr(remote_class, key)
+                dest_column = getattr(remote_class, sub_key)
                 attrs = [
                     getattr(dest_column, name)
                     for name in possible_names if hasattr(dest_column, name)
