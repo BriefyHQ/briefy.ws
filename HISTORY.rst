@@ -2,8 +2,14 @@
 History
 =======
 
-2.1.0 (Unreleased)
+2.0.4 (2017-06-28)
 ------------------
+
+    * Card #438: Enable filtering on association proxies (ericof).
+
+2.0.3 (2017-06-28)
+------------------
+
     * Refactor resource classes into modules and added new resources for versions and history (rudaporto).
     * Change security database query filter to use new briefy.common Model.query parameters (rudaporto).
 

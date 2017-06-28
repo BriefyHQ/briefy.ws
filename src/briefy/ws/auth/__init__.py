@@ -9,7 +9,7 @@ import newrelic.agent
 
 
 class AuthenticatedUser(BaseUser):
-    """Class to representing current authenticated user."""
+    """Class to represent current authenticated user."""
 
 
 @to_serializable.register(AuthenticatedUser)
