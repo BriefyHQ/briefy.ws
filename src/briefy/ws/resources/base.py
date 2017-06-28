@@ -12,6 +12,7 @@ from cornice.util import json_error
 from cornice.validators import colander_body_validator
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
+from sqlalchemy.ext.associationproxy import AssociationProxy
 
 import newrelic.agent
 import sqlalchemy as sa
@@ -266,15 +267,17 @@ class BaseResource:
         :return: A new query with a join with necessary,
                  A column in the own model or from a related one
         """
+        field = key
         if '.' in key:
             relationship_column_name, field = key.split('.')
-            query = query.join(relationship_column_name)
             column = getattr(self.model, relationship_column_name, None)
-            column = getattr(column.property.mapper.c, field, None)
+            if not isinstance(column, AssociationProxy):
+                query = query.join(relationship_column_name)
+                column = getattr(column.property.mapper.c, field, None)
         else:
             column = getattr(self.model, key, None)
 
-        return query, column
+        return query, column, field
 
     def filter_query(self, query, query_params=None):
         """Apply request filters to a query."""
@@ -295,13 +298,24 @@ class BaseResource:
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
-            query, column = self.get_column_from_key(query, key)
+            query, column, sub_key = self.get_column_from_key(query, key)
 
             if value == 'null':
                 value = None
 
             possible_names = [name.format(op=op) for name in ['{op}', '{op}_', '__{op}__']]
-            attrs = [getattr(column, name) for name in possible_names if hasattr(column, name)]
+
+            if isinstance(column, AssociationProxy) and '.' in key:
+                remote_class = column.remote_attr.prop.mapper.class_
+                dest_column = getattr(remote_class, sub_key)
+                attrs = [
+                    getattr(dest_column, name)
+                    for name in possible_names if hasattr(dest_column, name)
+                ]
+                filt = column.has(attrs[0](value))
+            else:
+                attrs = [getattr(column, name) for name in possible_names if hasattr(column, name)]
+                filt = attrs[0](value)
 
             if not attrs:
                 error_details = {
@@ -309,8 +323,6 @@ class BaseResource:
                     'description': "Invalid filter operator: '{op}'".format(op=op)
                 }
                 self.raise_invalid(**error_details)
-            else:
-                filt = attrs[0](value)
 
             query = query.filter(filt)
 
@@ -339,7 +351,7 @@ class BaseResource:
             func = sa.asc
             if direction == -1:
                 func = sa.desc
-            query, column = self.get_column_from_key(query, key)
+            query, column, key = self.get_column_from_key(query, key)
             query = query.order_by(func(column))
         return query
 
