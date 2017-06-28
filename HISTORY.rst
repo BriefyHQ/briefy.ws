@@ -2,6 +2,11 @@
 History
 =======
 
+2.0.4 (2017-06-28)
+------------------
+
+    * Card #438: Enable filtering on association proxies (ericof).
+
 2.0.3 (2017-06-28)
 ------------------
 
