@@ -1,2 +1,2 @@
--e git+git@github.com:BriefyHQ/briefy.common.git@2.0.2#egg=briefy.common[db]
+-e git+git@github.com:BriefyHQ/briefy.common.git@2.0.3#egg=briefy.common[db]
 -e .
