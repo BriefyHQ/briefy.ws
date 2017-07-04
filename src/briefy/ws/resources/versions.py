@@ -51,4 +51,4 @@ class VersionsService(BaseResource):
                     id=version_id
                 )
             )
-        return version
+        return version.__class__.to_dict(obj)
