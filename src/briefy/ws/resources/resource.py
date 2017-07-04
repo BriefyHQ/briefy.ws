@@ -86,9 +86,8 @@ class RESTService(BaseResource):
             if obj_exists:
                 self.raise_invalid('body', 'id', 'Duplicate object UUID: {id}'.format(id=obj_id))
 
-        session = self.session
         try:
-            obj = model(**payload)
+            obj = model.create(payload)
         except ValidationError as e:
             error_details = {
                 'location': e.location,
@@ -96,14 +95,12 @@ class RESTService(BaseResource):
                 'name': e.name
             }
             self.raise_invalid(**error_details)
-        except Exception as e:
+        except Exception as exc:
             logger.exception(
                 'Error creating an instance of {klass}'.format(klass=model.__name__)
             )
-            raise ValueError from e
+            raise ValueError from exc
         else:
-            session.add(obj)
-            session.flush()
             self.notify_obj_event(obj, 'POST')
             return obj
 

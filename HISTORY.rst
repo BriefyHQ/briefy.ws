@@ -17,6 +17,7 @@ History
 
     * Refactor resource classes into modules and added new resources for versions and history (rudaporto).
     * Change security database query filter to use new briefy.common Model.query parameters (rudaporto).
+    * RESTService.collection_post should use model.create classmethod factory (rudaporto).
 
 2.0.2 (2017-05-18)
 ------------------
