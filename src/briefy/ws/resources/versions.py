@@ -51,4 +51,13 @@ class VersionsService(BaseResource):
                     id=version_id
                 )
             )
-        return version.__class__.to_dict(obj)
+        data = version.to_dict()
+        add_metadata_attrs = ('_title', '_slug', '_description')
+        for attr_name in add_metadata_attrs:
+            if hasattr(version, attr_name):
+                value = data.pop(attr_name, None)
+                if not value:
+                    value = getattr(version, attr_name)
+                data[attr_name[1:]] = value
+
+        return data
