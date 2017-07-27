@@ -27,7 +27,9 @@ class WorkflowAwareResource(BaseResource):
     def _fields_schema(self, transition):
         """Return a schema to handle fields payload."""
         schema = None
-        includes = transition.required_fields
+        required_fields = transition.required_fields
+        optional_fields = transition.optional_fields
+        includes = required_fields + optional_fields
         if includes:
             schema = data.BriefySchemaNode(
                 self.model, unknown='ignore', includes=includes
