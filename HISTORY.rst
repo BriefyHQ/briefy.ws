@@ -2,6 +2,11 @@
 History
 =======
 
+2.0.6 (2017-07-27)
+------------------
+
+    * Transition supports optional_fields parameter (ericof).
+
 2.0.5 (2017-06-28)
 ------------------
 

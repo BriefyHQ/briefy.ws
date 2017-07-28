@@ -33,7 +33,7 @@ test_requirements = [
 
 setup(
     name='briefy.ws',
-    version='2.0.5',
+    version='2.0.6',
     description='Briefy microservice helpers.',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
