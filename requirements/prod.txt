@@ -1,2 +1,3 @@
+iso8601==0.1.11
 -e git+git@github.com:BriefyHQ/briefy.common.git@develop#egg=briefy.common[db]
 -e .
