@@ -15,5 +15,4 @@ def validate_id(request):
     try:
         uuid.UUID(path_id)
     except ValueError as e:
-        request.errors.add('path', 'id',
-                           'The id informed is not 16 byte uuid valid.')
+        request.errors.add('path', 'id', 'The id informed is not 16 byte uuid valid.')
