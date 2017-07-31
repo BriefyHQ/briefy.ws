@@ -121,8 +121,7 @@ class RESTService(BaseResource):
         self.set_transaction_name('collection_get')
         headers = self.request.response.headers
         pagination = self.get_records()
-        total = pagination['total']
-        headers['Total-Records'] = '{total}'.format(total=total)
+        headers['Total-Records'] = str(self.count_records())
         # Force in here to use the listing serialization.
         pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
         # also append columns metadata if available

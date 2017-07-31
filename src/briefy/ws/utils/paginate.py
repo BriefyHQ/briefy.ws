@@ -339,7 +339,6 @@ def extract_pagination_from_query_params(query_params: dict) -> dict:
         'items_per_page': 25
     }
     for key, value in params.items():
-
         new_value = query_params.get(
             '_{key}'.format(key=key), value
         )
