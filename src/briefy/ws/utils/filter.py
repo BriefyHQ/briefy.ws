@@ -5,6 +5,7 @@ from collections import namedtuple
 from enum import Enum
 
 import re
+import typing as t
 
 
 UPDATED_AT = 'updated_at'
@@ -35,12 +36,15 @@ class COMPARISON(Enum):
     EXCLUDE = 'notin_'
 
 
-def create_filter_from_query_params(query_params: dict, allowed_fields: list):
+def create_filter_from_query_params(
+        query_params: dict,
+        allowed_fields: t.Sequence[str]
+) -> t.Sequence[Filter]:
     """Process a query parameters dictionary and return a list of Filter objects.
 
     :param query_params: Dictionary containing query_params for a request.
     :param allowed_fields: List of fields that support sorting.
-    :return: list of Filter object
+    :return: list of Filter objects.
     """
     filters = []
     for param, param_value in query_params.items():
@@ -55,14 +59,17 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
             try:
                 value = int(param_value)
             except ValueError as exc:
-                raise ValueError('Parameter "{param}" is not a valid integer.'.format(param=param))
+                raise ValueError(f'Parameter "{param}" is not a valid integer.')
 
-            if param == '_since':
-                operator = COMPARISON.GT
+            operators = {
+                '_since': COMPARISON.GT,
+                '_to': COMPARISON.MAX,
+                '_before': COMPARISON.LT,
+            }
 
-            filters.append(
-                Filter(UPDATED_AT, value, operator)
-            )
+            operator = operators[param]
+
+            filters.append(Filter(UPDATED_AT, value, operator))
             continue
 
         m = re.match(r'^(min|max|not|lt|gt|in|exclude|like|ilike)_([\.\w]+)$', param)
@@ -74,7 +81,7 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
 
         if field not in allowed_fields:
             raise ValidationError(
-                message="Unknown filter field '{0}'".format(field),
+                message=f'Unknown filter field \'{field}\'',
                 location='querystring',
                 name=field
             )
@@ -83,23 +90,24 @@ def create_filter_from_query_params(query_params: dict, allowed_fields: list):
         if operator in (COMPARISON.IN, COMPARISON.EXCLUDE):
             value = set([data.native_value(v, field) for v in param_value.split(',')])
         elif operator in (COMPARISON.LIKE, COMPARISON.ILIKE, ):
-            value = '%{value}%'.format(value=value.replace('%', ''))
+            value = value.replace('%', '')
+            value = f'%{value}%'
         filters.append(Filter(field, value, operator))
     return filters
 
 
 def create_sorting_from_query_params(
         query_params: dict,
-        allowed_fields: list,
+        allowed_fields: t.Sequence[str],
         default: str='',
-        default_direction: str=''):
+        default_direction: str='') -> t.Sequence[Sort]:
     """Process a query parameters dictionary and return a list of Sort objects.
 
     :param query_params: Dictionary containing query_params for a request.
     :param allowed_fields: List of fields that support sorting.
     :param default: Default field for sorting.
     :param default_direction: Default direction for sorting.
-    :return: list of Sort object
+    :return: list of Sort objects.
     """
     specified = query_params.get('_sort', '').split(',')
     sorting = []
@@ -110,7 +118,7 @@ def create_sorting_from_query_params(
             order, field = m.groups()
             if field not in allowed_fields:
                 raise ValidationError(
-                    message="Unknown sort field '{0}'".format(field),
+                    message=f'Unknown sort field \'{field}\'',
                     location='querystring',
                     name=field
                 )

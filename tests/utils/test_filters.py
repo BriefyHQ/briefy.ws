@@ -179,7 +179,7 @@ class TestFilterFromQueryParams:
         assert '360' in result[0].value
 
     def test_since(self):
-        """Passing id, value '360'."""
+        """Using a valid timestamp."""
         query_params = {'_since': '1481544732'}
         func = filter.create_filter_from_query_params
         result = func(query_params=query_params, allowed_fields=self.allowed_fields)
@@ -189,6 +189,23 @@ class TestFilterFromQueryParams:
         assert result[0].field == 'updated_at'
         assert result[0].operator.value == 'gt'
         assert result[0].value == 1481544732
+
+    def test_unknown_parameter(self):
+        """Parameter starts with _ but is not _since, _to, _before."""
+        query_params = {'_other': '1481544732'}
+        func = filter.create_filter_from_query_params
+        result = func(query_params=query_params, allowed_fields=self.allowed_fields)
+
+        assert isinstance(result, list)
+        assert len(result) == 0
+
+    def test_since_wrong_parameter(self):
+        """Using an invalid timestamp."""
+        query_params = {'_since': 'tomorrow'}
+        func = filter.create_filter_from_query_params
+        with pytest.raises(ValueError) as exc:
+            func(query_params=query_params, allowed_fields=self.allowed_fields)
+        assert 'Parameter "_since" is not a valid integer' in str(exc)
 
     def test_one_invalid_field(self):
         """Passing foobar, an invalid field."""
