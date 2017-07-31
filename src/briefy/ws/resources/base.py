@@ -29,6 +29,9 @@ class BaseResource:
     enable_security = True
 
     _default_notify_events = {}
+    _item_count = None
+    _query = None
+    _query_params = None
 
     def __init__(self, context, request):
         """Initialize the service."""
@@ -108,6 +111,7 @@ class BaseResource:
                   f'{self.friendly_name} user: {principal_id} Parms: {kwargs}'
             logger.error(msg)
             raise Unauthorized(msg)
+
         query = self.default_filters(query)
         return query
 
@@ -234,15 +238,19 @@ class BaseResource:
 
         :return: tuple
         """
-        query_params = self.request.GET
-        query = self._get_base_query(permission=permission)
+        if not (self._query and self._query_params):
+            _query_params = self.request.GET
+            _query = self._get_base_query(permission=permission)
 
-        # Apply filters
-        query = self.filter_query(query, query_params)
+            # Apply filters
+            _query = self.filter_query(_query, _query_params)
 
-        # Apply sorting
-        query = self.sort_query(query, query_params)
-        return query, query_params
+            # Apply sorting
+            _query = self.sort_query(_query, _query_params)
+            self._query = _query
+            self._query_params = _query_params
+
+        return self._query, self._query_params
 
     def get_records(self):
         """Get all records for this resource and return a dictionary.
@@ -250,16 +258,22 @@ class BaseResource:
         :return: dict
         """
         query, query_params = self._get_records_query()
-        pagination = self.paginate(query, query_params)
+        item_count = self.count_records(query)
+        pagination = self.paginate(query, query_params, item_count)
         return pagination
 
-    def count_records(self) -> int:
+    def count_records(self, query=None) -> int:
         """Count records for a request.
 
         :return: Count of records to be returned
         """
-        query, query_params = self._get_records_query()
-        return query.count()
+        if not query:
+            query, query_params = self._get_records_query()
+
+        if not self._item_count:
+            self._item_count = query.count()
+
+        return self._item_count
 
     def get_column_from_key(self, query, key):
         """Get a column and join based on a key.
@@ -355,11 +369,12 @@ class BaseResource:
             query = query.order_by(func(column))
         return query
 
-    def paginate(self, query, query_params: dict=None):
+    def paginate(self, query, query_params: dict=None, item_count: int=None):
         """Pagination."""
         if '_items_per_page' not in query_params:
             query_params['_items_per_page'] = str(self.items_per_page)
         params = paginate.extract_pagination_from_query_params(query_params)
         params['collection'] = query
+        params['item_count'] = item_count if item_count else self.count_records(query)
         pagination = paginate.SQLPage(**params)
         return pagination()
