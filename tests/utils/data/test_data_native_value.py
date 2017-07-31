@@ -1,4 +1,4 @@
-"""Test data utilities."""
+"""Test data native_value utilities."""
 from briefy.ws.utils import data
 
 
