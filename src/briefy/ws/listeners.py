@@ -7,7 +7,11 @@ from sqlalchemy import event as sa_event
 import typing as t
 
 
-def base_receive_init_workflow_context(target, args, kwargs):
+def base_receive_init_workflow_context(
+        target: Base,
+        args: t.List,
+        kwargs: dict
+):
     """Listener to insert request.user as workflow_context and request.
 
     Both are passed as init parameters of all models that have these attributes.
@@ -25,7 +29,10 @@ def base_receive_init_workflow_context(target, args, kwargs):
             kwargs['workflow_context'] = auth_user
 
 
-def base_receive_load_workflow_context(target: Base, context):
+def base_receive_load_workflow_context(
+        target: Base,
+        context
+):
     """Listener to set request.user as workflow_context and request in all models.
 
     Both are set for all models that have these attributes.

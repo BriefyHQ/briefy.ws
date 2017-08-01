@@ -21,8 +21,8 @@ def not_found(exc: http_exc.HTTPNotFound, request: Request) -> Response:
         body.update(comment)
     body.update({
         'status': 'error',
-        'message': '{0}: {1}'.format(exc.detail, request.url),
-        'url': '{0}'.format(request.url)
+        'message': f'{exc.detail}: {request.url}',
+        'url': f'{request.url}'
     })
     response = Response(json.dumps(body))
     response.status_int = 404
