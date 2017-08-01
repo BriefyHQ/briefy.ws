@@ -17,7 +17,7 @@ requires = [
     'colanderalchemy',
     'cornice==2.4.0',
     'prettyconf',
-    'pyramid==1.8.3',
+    'pyramid==1.9.1',
     'pyramid_jwt',
     'pyramid_tm',
     'requests',
@@ -33,7 +33,7 @@ test_requirements = [
 
 setup(
     name='briefy.ws',
-    version='2.0.6',
+    version='2.1.0',
     description='Briefy microservice helpers.',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
