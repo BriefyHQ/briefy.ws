@@ -32,6 +32,7 @@ def test_uuid4_valid(value):
 test_data = [
     '228abe0b',
     '',
+    None,
     'foo',
     '339e1685-59ef-5050-b0b3-5a8060e1f4cc',
     '11111111-1111-1111-1111-111111111111'

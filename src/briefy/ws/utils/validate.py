@@ -10,6 +10,6 @@ def validate_uuid(value: str, version: int=4) -> bool:
     """
     try:
         valid = uuid.UUID(value).version == version
-    except ValueError as e:
+    except (TypeError, ValueError) as e:
         valid = False
     return valid
