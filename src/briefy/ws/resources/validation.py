@@ -1,5 +1,5 @@
 """Custom common validators."""
-import uuid
+from briefy.ws.utils.validate import validate_uuid
 
 
 def validate_id(request):
@@ -9,10 +9,6 @@ def validate_id(request):
     :return:
     """
     path_id = request.matchdict.get('id')
-    if path_id is None:
-        return
 
-    try:
-        uuid.UUID(path_id)
-    except ValueError as e:
+    if path_id and not validate_uuid(path_id):
         request.errors.add('path', 'id', 'The id informed is not 16 byte uuid valid.')

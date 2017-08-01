@@ -21,13 +21,8 @@ def server_error(exc: Exception, request: Request) -> Response:
         payload = {}
 
     logger.error(
-        '{error} occurred on url {url}'.format(
-            error=exc.__class__.__name__,
-            url=request.url
-        ),
-        extra={
-            'payload': payload
-        },
+        f'{exc.__class__.__name__} occurred on url {request.url}',
+        extra={'payload': payload},
         exc_info=exc
     )
     msg = 'Something went terribly wrong and now we need to wake up a sysadmin'
