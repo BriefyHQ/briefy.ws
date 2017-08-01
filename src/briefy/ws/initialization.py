@@ -29,7 +29,7 @@ def initialize(
     # Override project version from settings.
     project_version = settings.get('project_version') or version
     if not project_version:
-        raise ConfigurationError(f'Invalid project version: {project_version}')
+        raise ConfigurationError('Invalid project version')
 
     settings['project_version'] = project_version = str(project_version)
 
