@@ -1,10 +1,17 @@
 """briefy.ws sqlalchemy event handlers for model classes."""
 from briefy.common.db.mixins.workflow import WorkflowBase
+from briefy.common.db.model import Base
 from pyramid.threadlocal import get_current_request
 from sqlalchemy import event as sa_event
 
+import typing as t
 
-def base_receive_init_workflow_context(target, args, kwargs):
+
+def base_receive_init_workflow_context(
+        target: Base,
+        args: t.List,
+        kwargs: dict
+):
     """Listener to insert request.user as workflow_context and request.
 
     Both are passed as init parameters of all models that have these attributes.
@@ -22,7 +29,10 @@ def base_receive_init_workflow_context(target, args, kwargs):
             kwargs['workflow_context'] = auth_user
 
 
-def base_receive_load_workflow_context(target, context):
+def base_receive_load_workflow_context(
+        target: Base,
+        context
+):
     """Listener to set request.user as workflow_context and request in all models.
 
     Both are set for all models that have these attributes.
@@ -40,11 +50,10 @@ def base_receive_load_workflow_context(target, context):
             target.workflow_context = auth_user
 
 
-def register_workflow_context_listeners(models) -> list:
+def register_workflow_context_listeners(models: t.Sequence[Base]):
     """For all models in the list register the workflow context handlers.
 
     :param models: list of model classes
-    :type models: list
     """
     for model_klass in models:
         sa_event.listen(model_klass, 'init', base_receive_init_workflow_context)

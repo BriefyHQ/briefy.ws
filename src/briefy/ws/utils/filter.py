@@ -100,7 +100,7 @@ def create_sorting_from_query_params(
         query_params: dict,
         allowed_fields: t.Sequence[str],
         default: str='',
-        default_direction: str='') -> t.Sequence[Sort]:
+        default_direction: int=1) -> t.Sequence[Sort]:
     """Process a query parameters dictionary and return a list of Sort objects.
 
     :param query_params: Dictionary containing query_params for a request.

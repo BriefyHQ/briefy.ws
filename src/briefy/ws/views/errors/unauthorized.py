@@ -16,11 +16,7 @@ def forbidden(exc: http_exc.HTTPForbidden, request: Request) -> Response:
     :returns: A response object with a application/json formatted body
     """
     body = {}
-    body.update({
-        'status': 'error',
-        'message': 'Unauthorized',
-        'url': '{0}'.format(request.url)
-    })
+    body.update({'status': 'error', 'message': 'Unauthorized', 'url': f'{request.url}'})
     response = Response(json.dumps(body))
     response.status_int = 403
     response.content_type = 'application/json'

@@ -4,8 +4,10 @@ History
 
 2.1.0 (Unreleased)
 ------------------
-    * Improving query and count to be cached in the view class to avoid query duplication in case of a second call (rudaporto).
 
+    * Improving query and count to be cached in the view class to avoid query duplication in case of a second call (rudaporto).
+    * Increase usage of type hints (ericof).
+    * Increase code coverage (ericof).
 
 2.0.6 (2017-07-27)
 ------------------
