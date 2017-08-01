@@ -1,20 +1,23 @@
 """Context base factory for cornice resources."""
+from briefy.ws.utils.validate import validate_uuid
 from pyramid.authorization import Allow
+from pyramid.request import Request
 
-import uuid
-
-
-__base_admin_acl__ = [
-    (Allow, 'g:briefy', ['list', 'view'])
-    ]
+import typing as t
 
 
-class BaseFactory(object):
+ACL = t.Tuple[str, str, t.Sequence[str]]
+
+
+__base_admin_acl__ = [(Allow, 'g:briefy', ['list', 'view'])]
+
+
+class BaseFactory:
     """Base Factory that computes acl."""
 
     model = None
 
-    def __init__(self, request):
+    def __init__(self, request: Request):
         """Initialize route factory.
 
         :param request: pyramid request object.
@@ -22,20 +25,18 @@ class BaseFactory(object):
         self.request = request
 
     @property
-    def __base_acl__(self) -> list:
+    def __base_acl__(self) -> t.Sequence[ACL]:
         """Hook to be use by subclasses to define default ACLs in context.
 
-        :return: list of ACLs
-        :rtype: list
+        :return: Sequence of ACLs
         """
         return []
 
     @property
-    def __acl__(self) -> list:
+    def __acl__(self) -> t.Sequence[ACL]:
         """ACL for a factory.
 
         :return: list of tuples containing the acl
-        :rtype: list
         """
         permissions = []
         # ACL for admins
@@ -49,50 +50,40 @@ class BaseFactory(object):
         return permissions
 
     @property
-    def model_permissions(self) -> list:
+    def model_permissions(self) -> t.Sequence[ACL]:
         """Get permissions defined on model level."""
         model = self.model
+        permissions = []
         if model:
-            return [(Allow, role, permissions) for role, permissions in model.__acl__()]
-        else:
-            return []
+            permissions = [(Allow, role, permissions) for role, permissions in model.__acl__()]
+        return permissions
 
-    def has_global_permissions(self, permission, roles) -> bool:
+    def has_global_permissions(self, permission: str, roles: t.Sequence[str]) -> bool:
         """Return true if the permission is global in the model level."""
         model = self.model
-        if not model:
-            return False
-        raw_acl = self.model.__raw_acl__
-        for acl_permissions, acl_roles in raw_acl:
-            if acl_permissions == permission:
-                for role in roles:
-                    if role in acl_roles:
-                        return True
-                break
+        check = False
+        if model:
+            raw_acl = self.model.__raw_acl__
+            for acl_permissions, acl_roles in raw_acl:
+                if acl_permissions == permission:
+                    for role in roles:
+                        if role in acl_roles:
+                            check = True
+                    break
+        return check
 
     @property
-    def workflow_permissions(self) -> list:
+    def workflow_permissions(self) -> t.Sequence[ACL]:
         """Compute ACLs from instance workflow.
 
         :return: permissions from model instance using workflow object.
-        :rtype: list
         """
         result = []
         context_id = self.request.matchdict.get('id')
-
-        if context_id:
-            # make sure id is uid valid at this point
-            # request validators only run after permission checks
-            try:
-                uuid.UUID(context_id)
-            except ValueError:
-                return result
-        else:
-            return result
-
         model = self.model
         user = self.request.user
-        if model and user:
+
+        if validate_uuid(context_id) and model and user:
             context = model.get(context_id)
             if context:
                 wf = context.workflow

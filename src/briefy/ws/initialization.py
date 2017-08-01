@@ -23,8 +23,8 @@ def initialize(config, version=None, project_name='', default_settings=None):
     # Override project version from settings.
     project_version = settings.get('project_version') or version
     if not project_version:
-        error_msg = 'Invalid project version: {version}'.format(version=project_version)
-        raise ConfigurationError(error_msg)
+        raise ConfigurationError(f'Invalid project version: {project_version}')
+
     settings['project_version'] = project_version = str(project_version)
 
     # HTTP API version.

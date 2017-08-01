@@ -18,10 +18,10 @@ class JSONRenderer(JSON):
                 return obj.__json__(request)
             obj_iface = providedBy(obj)
             adapters = self.components.adapters
-            result = adapters.lookup((obj_iface,), IJSONAdapter,
-                                     default=_marker)
+            result = adapters.lookup((obj_iface,), IJSONAdapter, default=_marker)
             if result is _marker:
-                raise TypeError('%r is not JSON serializable' % (obj,))
+                obj_repr = repr(obj)
+                raise TypeError(f'{obj_repr} is not JSON serializable')
             return result(obj, request)
         return default
 

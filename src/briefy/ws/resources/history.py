@@ -12,7 +12,7 @@ class HistoryService(BaseResource):
     """This must be provided by subclass."""
 
     @view(validators='_run_validators', permission='list')
-    def collection_get(self):
+    def collection_get(self) -> dict:
         """Return the workflow history for this object."""
         self.set_transaction_name('collection_get')
         headers = self.request.response.headers
