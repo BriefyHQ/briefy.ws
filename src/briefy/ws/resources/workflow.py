@@ -1,9 +1,9 @@
 """Manage model workflow lifecycle via REST."""
-from briefy.common.workflow.base import AttachedTransition
-from briefy.common.workflow.base import WorkflowTransition
-from briefy.common.workflow.exceptions import WorkflowPermissionException
-from briefy.common.workflow.exceptions import WorkflowTransitionException
-from briefy.common.workflow.workflow import Workflow
+from briefy.common.workflow import Workflow
+from briefy.common.workflow import WorkflowPermissionException
+from briefy.common.workflow import WorkflowTransition
+from briefy.common.workflow import WorkflowTransitionException
+from briefy.common.workflow.transition import AttachedTransition
 from briefy.ws.resources import BaseResource
 from briefy.ws.utils import data
 from cornice.resource import view
