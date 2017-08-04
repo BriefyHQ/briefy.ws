@@ -59,7 +59,7 @@ class SQLQueryService(BaseResource):
         for row in result:
             item = {column: row[i] for i, column in data_keys}
             data_set.append(item)
-        data_set = self.transform(data)
+        data_set = self.transform(data_set)
 
         item_count = result.rowcount
         params = {
