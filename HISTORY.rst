@@ -11,6 +11,7 @@ History
     * Increase usage of type hints (ericof).
     * Increase code coverage (ericof).
     * Fix Workflow imports (ericof).
+    * New base resource to return a paginate collection from a custom plain sql query (rudaporto).
 
 2.0.6 (2017-07-27)
 ------------------
