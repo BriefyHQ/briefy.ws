@@ -1,6 +1,5 @@
 """Webservice to return a paginate collection based in a custom query."""
 from briefy.ws.resources import BaseResource
-from briefy.ws.utils import data
 from briefy.ws.utils import paginate
 from cornice.resource import view
 
@@ -25,7 +24,7 @@ class SQLQueryService(BaseResource):
     """String with a custom plain sql query."""
 
     def transform(self, data: list) -> list:
-        """Transform data items after query execution
+        """Transform data items after query execution.
 
         :data: list of records to be transformed
         :returns: list of records after transformation
