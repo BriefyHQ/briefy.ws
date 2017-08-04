@@ -1,2 +1,2 @@
--e git+git@github.com:BriefyHQ/briefy.common.git@fix\/514-validate-state-history-before-persisting-it#egg=briefy.common[db]
+-e git+git@github.com:BriefyHQ/briefy.common.git@develop#egg=briefy.common[db]
 -e .
