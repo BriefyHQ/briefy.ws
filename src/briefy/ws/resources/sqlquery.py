@@ -66,11 +66,12 @@ class SQLQueryService(BaseResource):
             'item_count': item_count
         }
 
-        columns_map = self._columns_map
-        if columns_map:
-            params['columns'] = columns_map
-
         headers = self.request.response.headers
         headers['Total-Records'] = str(item_count)
         pagination = paginate.SQLPage(**params)()
+
+        columns_map = self._columns_map
+        if columns_map:
+            pagination['columns'] = columns_map
+
         return pagination
