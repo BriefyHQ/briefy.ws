@@ -53,7 +53,6 @@ def test_base_resource_collection_get(login, web_request, context, model_class, 
     service = RESTService(context, web_request)
     TestModel.__session__ = database
     service.model = TestModel
-    service.enable_security = False
     response = service.collection_get()
     assert 'data' in response
     assert 'pagination' in response
