@@ -17,4 +17,6 @@ class TestSQLQueryResource:
     def test_sqlquery_resource_collection_get(self, login, web_request, context):
         """Execute collection_get method of sqlservice."""
         service = SQLQueryService(context, web_request)
-        service.collection_get()
+        response = service.collection_get()
+        assert 'data' in response
+        assert 'pagination' in response

@@ -1,10 +1,14 @@
 """Conftest for briefy.ws."""
 from briefy import common
+from briefy.common.db import Base
 from briefy.ws.auth import AuthenticatedUser
 from pyramid.testing import DummyRequest
+from sqlalchemy import create_engine
+from sqlalchemy import orm
 from tests.testapp import main as _testapp
 from unittest.mock import Mock
 from zope.configuration.xmlconfig import XMLConfig
+from zope.sqlalchemy import ZopeTransactionExtension
 
 import collections
 import pytest
@@ -12,6 +16,10 @@ import uuid
 
 
 XMLConfig('configure.zcml', common)()
+
+DBSession = orm.scoped_session(
+    orm.sessionmaker(extension=ZopeTransactionExtension())
+)
 
 
 class UserMock:
@@ -221,6 +229,24 @@ def testapp():
     app = _testapp({}, config=None)
 
     return TestApp(app)
+
+
+@pytest.fixture()
+def database(request):
+    """Create new engine based on db_settings fixture.
+    :param request: pytest request
+    :return: sqlalcheny engine instance.
+    """
+    database_url = 'sqlite://'
+    engine = create_engine(database_url, echo=False)
+    DBSession.configure(bind=engine)
+    Base.metadata.create_all(engine)
+
+    def teardown():
+        Base.metadata.drop_all(engine)
+
+    request.addfinalizer(teardown)
+    return DBSession()
 
 
 @pytest.fixture('class')
