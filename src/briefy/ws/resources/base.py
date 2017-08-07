@@ -116,7 +116,7 @@ class BaseResource:
             kwargs['permission'] = f'can_{permission}'
         try:
             query = model.query(**kwargs)
-        except AttributeError:
+        except AttributeError as exc:
             msg = f'Permission attribute do not exists in model ' \
                   f'{self.friendly_name} user: {principal_id} Parms: {kwargs}'
             logger.error(msg)
