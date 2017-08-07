@@ -1,19 +1,12 @@
 """Test BriefySchemaNode."""
+from briefy.common.db import Base
 from briefy.ws.utils import data
-from sqlalchemy import create_engine
 from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
-from zope.sqlalchemy import ZopeTransactionExtension
 
 import colander
 import pytest
 import sqlalchemy as sa
-
-
-DBSession = orm.scoped_session(orm.sessionmaker(extension=ZopeTransactionExtension()))
-
-Base = declarative_base()
 
 
 class Company(Base):
@@ -94,24 +87,6 @@ class User(Base):
     def masked_email(self):
         """Return the email, masked."""
         return self.email.replace('@', ' at ')
-
-
-@pytest.fixture()
-def database(request):
-    """Create new engine based on db_settings fixture.
-    :param request: pytest request
-    :return: sqlalcheny engine instance.
-    """
-    database_url = 'sqlite://'
-    engine = create_engine(database_url, echo=False)
-    DBSession.configure(bind=engine)
-    Base.metadata.create_all(engine)
-
-    def teardown():
-        Base.metadata.drop_all(engine)
-
-    request.addfinalizer(teardown)
-    return engine
 
 
 def test_schema_base(database):
