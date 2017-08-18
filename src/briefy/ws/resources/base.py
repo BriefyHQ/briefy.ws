@@ -19,6 +19,7 @@ from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 import colander
 import newrelic.agent
@@ -289,9 +290,16 @@ class BaseResource:
         if '.' in key:
             relationship_column_name, field = key.split('.')
             column = getattr(self.model, relationship_column_name, None)
-            if not isinstance(column, AssociationProxy):
+            if not isinstance(column, (AssociationProxy, InstrumentedAttribute)):
                 query = query.join(relationship_column_name)
-                column = getattr(column.property.mapper.c, field, None)
+                sub_column = getattr(column.property.mapper.c, field, None)
+
+                # try to get the original field starting with underscore
+                if sub_column is None:
+                    original_field = f'_{field}'
+                    sub_column = getattr(column.property.mapper.c, original_field, None)
+
+                column = sub_column
         else:
             column = getattr(self.model, key, None)
 
@@ -329,6 +337,14 @@ class BaseResource:
                 dest_column = getattr(remote_class, sub_key)
                 attrs = [getattr(dest_column, name) for name in possible_names
                          if hasattr(dest_column, name)]
+            elif isinstance(column, InstrumentedAttribute) and '.' in key:
+                dest_column = getattr(column.property.mapper.c, sub_key, None)
+                # try to get the original field starting with underscore
+                if dest_column is None:
+                    sub_key = f'_{sub_key}'
+                    dest_column = getattr(column.property.mapper.c, sub_key, None)
+                attrs = [getattr(dest_column, name) for name in possible_names
+                         if hasattr(dest_column, name)]
             else:
                 attrs = [getattr(column, name) for name in possible_names if hasattr(column, name)]
 
@@ -342,7 +358,7 @@ class BaseResource:
                 }
                 self.raise_invalid(**error_details)
 
-            if isinstance(column, AssociationProxy) and '.' in key:
+            if isinstance(column, AssociationProxy, InstrumentedAttribute) and '.' in key:
                 filt = column.has(attrs[0](value))
             else:
                 filt = attrs[0](value)
