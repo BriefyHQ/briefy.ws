@@ -290,14 +290,15 @@ class BaseResource:
         if '.' in key:
             relationship_column_name, field = key.split('.')
             column = getattr(self.model, relationship_column_name, None)
+            if column is None:
+                column = getattr(self.model, f'_{relationship_column_name}', None)
             if not isinstance(column, (AssociationProxy, InstrumentedAttribute)):
                 query = query.join(relationship_column_name)
                 sub_column = getattr(column.property.mapper.c, field, None)
 
                 # try to get the original field starting with underscore
                 if sub_column is None:
-                    original_field = f'_{field}'
-                    sub_column = getattr(column.property.mapper.c, original_field, None)
+                    sub_column = getattr(column.property.mapper.c, f'_{field}', None)
 
                 column = sub_column
         else:
