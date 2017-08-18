@@ -327,21 +327,25 @@ class BaseResource:
             if isinstance(column, AssociationProxy) and '.' in key:
                 remote_class = column.remote_attr.prop.mapper.class_
                 dest_column = getattr(remote_class, sub_key)
-                attrs = [
-                    getattr(dest_column, name)
-                    for name in possible_names if hasattr(dest_column, name)
-                ]
-                filt = column.has(attrs[0](value))
+                attrs = [getattr(dest_column, name) for name in possible_names
+                         if hasattr(dest_column, name)]
             else:
                 attrs = [getattr(column, name) for name in possible_names if hasattr(column, name)]
-                filt = attrs[0](value)
 
+            # validate before try to create the filter
             if not attrs:
                 error_details = {
                     'location': 'querystring',
-                    'description': f'Invalid filter operator: \'{op}\''
+                    'description': f'Invalid filter operator: \'{op}\'',
+                    'name': key,
+                    'value': value
                 }
                 self.raise_invalid(**error_details)
+
+            if isinstance(column, AssociationProxy) and '.' in key:
+                filt = column.has(attrs[0](value))
+            else:
+                filt = attrs[0](value)
 
             query = query.filter(filt)
 
