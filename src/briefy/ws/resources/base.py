@@ -358,7 +358,7 @@ class BaseResource:
                 }
                 self.raise_invalid(**error_details)
 
-            if isinstance(column, AssociationProxy, InstrumentedAttribute) and '.' in key:
+            if isinstance(column, (AssociationProxy, InstrumentedAttribute)) and '.' in key:
                 filt = column.has(attrs[0](value))
             else:
                 filt = attrs[0](value)
