@@ -309,6 +309,7 @@ class BaseResource:
     def filter_query(self, query: Query, query_params: t.Optional[dict]=None) -> Query:
         """Apply request filters to a query."""
         raw_filters = ()
+        with_transformation = False
         try:
             raw_filters = filter.create_filter_from_query_params(
                 query_params,
@@ -323,6 +324,7 @@ class BaseResource:
             self.raise_invalid(**error_details)
 
         for raw_filter in raw_filters:
+            mapper = None
             key = raw_filter.field
             value = raw_filter.value
             op = raw_filter.operator.value
@@ -332,22 +334,34 @@ class BaseResource:
                 value = None
 
             possible_names = [name.format(op=op) for name in ['{op}', '{op}_', '__{op}__']]
-
             if isinstance(column, AssociationProxy) and '.' in key:
-                remote_class = column.remote_attr.prop.mapper.class_
-                dest_column = getattr(remote_class, sub_key)
-                attrs = [getattr(dest_column, name) for name in possible_names
-                         if hasattr(dest_column, name)]
+                mapper = getattr(column.remote_attr.prop, 'mapper', None)
+                if mapper:
+                    remote_class = mapper.class_
+                    dest_column = getattr(remote_class, sub_key)
+                    attrs = [getattr(dest_column, name) for name in possible_names
+                             if hasattr(dest_column, name)]
+                else:
+                    # in this case it will be a json field so we just use the normal comparator
+                    attrs = [getattr(column, name) for name in possible_names
+                             if hasattr(column, name)]
             elif isinstance(column, InstrumentedAttribute) and '.' in key:
-                dest_column = getattr(column.property.mapper.c, sub_key, None)
+                mapper = getattr(column.property, 'mapper', None)
+                dest_column = getattr(mapper.c, sub_key, None)
                 # try to get the original field starting with underscore
                 if dest_column is None:
-                    sub_key = f'_{sub_key}'
-                    dest_column = getattr(column.property.mapper.c, sub_key, None)
+                    dest_column = getattr(mapper.c, f'_{sub_key}', None)
                 attrs = [getattr(dest_column, name) for name in possible_names
                          if hasattr(dest_column, name)]
             else:
-                attrs = [getattr(column, name) for name in possible_names if hasattr(column, name)]
+                if isinstance(column, AssociationProxy):
+                    # try to find operator attr in the the proxy remote_attr
+                    attrs = [getattr(column.remote_attr, name) for name in possible_names
+                             if hasattr(column.remote_attr, name)]
+                    with_transformation = True
+                else:
+                    attrs = [getattr(column, name) for name in possible_names if
+                             hasattr(column, name)]
 
             # validate before try to create the filter
             if not attrs:
@@ -360,11 +374,22 @@ class BaseResource:
                 self.raise_invalid(**error_details)
 
             if isinstance(column, (AssociationProxy, InstrumentedAttribute)) and '.' in key:
-                filt = column.has(attrs[0](value))
+                if mapper:
+                    filt = column.has(attrs[0](value))
+                else:
+                    filt = attrs[0](value)
+
+            elif isinstance(column, AssociationProxy):
+                # in this case use normal filter but we may need a customized comparator
+                filt = attrs[0](value)
+
             else:
                 filt = attrs[0](value)
 
-            query = query.filter(filt)
+            if with_transformation:
+                query = query.with_transformation(filt)
+            else:
+                query = query.filter(filt)
 
         return query
 
