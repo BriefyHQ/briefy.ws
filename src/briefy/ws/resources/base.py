@@ -1,4 +1,5 @@
 """Webservice base resource."""
+from briefy.common.db.comparator import BaseComparator
 from briefy.common.db.mixins import LocalRolesMixin
 from briefy.common.db.model import Base
 from briefy.ws import logger
@@ -342,7 +343,6 @@ class BaseResource:
                     attrs = [getattr(dest_column, name) for name in possible_names
                              if hasattr(dest_column, name)]
                 else:
-                    # in this case it will be a json field so we just use the normal comparator
                     attrs = [getattr(column, name) for name in possible_names
                              if hasattr(column, name)]
             elif isinstance(column, InstrumentedAttribute) and '.' in key:
@@ -355,10 +355,17 @@ class BaseResource:
                          if hasattr(dest_column, name)]
             else:
                 if isinstance(column, AssociationProxy):
-                    # try to find operator attr in the the proxy remote_attr
-                    attrs = [getattr(column.remote_attr, name) for name in possible_names
-                             if hasattr(column.remote_attr, name)]
-                    with_transformation = True
+                    remote_attr = column.remote_attr
+                    if isinstance(column.remote_attr.comparator, BaseComparator):
+                        with_transformation = True
+                        attrs = [getattr(remote_attr, name) for name in possible_names
+                                 if hasattr(remote_attr, name)]
+                    else:
+                        attrs = [getattr(column, name) for name in possible_names
+                                 if hasattr(column, name)]
+                        if not attrs:
+                            attrs = [getattr(remote_attr, name) for name in possible_names
+                                     if hasattr(remote_attr, name)]
                 else:
                     attrs = [getattr(column, name) for name in possible_names if
                              hasattr(column, name)]
@@ -378,11 +385,6 @@ class BaseResource:
                     filt = column.has(attrs[0](value))
                 else:
                     filt = attrs[0](value)
-
-            elif isinstance(column, AssociationProxy):
-                # in this case use normal filter but we may need a customized comparator
-                filt = attrs[0](value)
-
             else:
                 filt = attrs[0](value)
 
