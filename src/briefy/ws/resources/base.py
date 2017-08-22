@@ -310,7 +310,6 @@ class BaseResource:
     def filter_query(self, query: Query, query_params: t.Optional[dict]=None) -> Query:
         """Apply request filters to a query."""
         raw_filters = ()
-        with_transformation = False
         try:
             raw_filters = filter.create_filter_from_query_params(
                 query_params,
@@ -325,6 +324,7 @@ class BaseResource:
             self.raise_invalid(**error_details)
 
         for raw_filter in raw_filters:
+            with_transformation = False
             mapper = None
             key = raw_filter.field
             value = raw_filter.value
@@ -354,6 +354,7 @@ class BaseResource:
                 attrs = [getattr(dest_column, name) for name in possible_names
                          if hasattr(dest_column, name)]
             else:
+
                 if isinstance(column, AssociationProxy):
                     remote_attr = column.remote_attr
                     if isinstance(column.remote_attr.comparator, BaseComparator):
@@ -367,6 +368,8 @@ class BaseResource:
                             attrs = [getattr(remote_attr, name) for name in possible_names
                                      if hasattr(remote_attr, name)]
                 else:
+                    if isinstance(column.comparator, BaseComparator):
+                        with_transformation = True
                     attrs = [getattr(column, name) for name in possible_names if
                              hasattr(column, name)]
 
