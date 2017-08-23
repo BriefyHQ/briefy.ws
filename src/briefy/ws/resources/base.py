@@ -331,6 +331,14 @@ class BaseResource:
             op = raw_filter.operator.value
             query, column, sub_key = self.get_column_from_key(query, key)
 
+            if not column:
+                error_details = {
+                    'location': 'querystring',
+                    'description': 'filter column not found in this item',
+                    'name': key
+                }
+                self.raise_invalid(**error_details)
+
             if value == 'null':
                 value = None
 

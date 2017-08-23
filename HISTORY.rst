@@ -17,6 +17,7 @@ History
     * Move database fixtures to conftest and use Base sqlalchemy from briefy.common (rudaporto).
     * Fix: validate column filters before trying to access attr to create the filter (rudaporto).
     * Improve base resource filters to be filter association proxy attributes using special comparator (rudaporto).
+    * Validate if we can find the column to do the filer and send the proper error messsage if not (rudaporto).
 
 
 2.0.6 (2017-07-27)
