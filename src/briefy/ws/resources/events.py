@@ -14,13 +14,22 @@ class BaseResourceObjectEvent:
         """Custom init to call parent BaseEvent if it exist."""
         self.request = request
         self.obj = obj
+        try:
+            super().__init__(obj, **kwargs)
+        except TypeError as exc:
+            logger.debug(f'Super is calling not and event class. Exception {exc}')
+            super().__init__()
 
     def __call__(self) -> str:
         """Notify about the event, need to be implemented by subclass.
 
         :returns: A string
         """
-        return ''
+        try:
+            super().__call__()
+        except AttributeError as exc:
+            logger.debug(f'Call method of the event not found. Exception {exc}')
+            return ''
 
 
 class ObjectLoadedEvent(BaseResourceObjectEvent):
@@ -57,22 +66,8 @@ class ObjectCreatedEvent(ResourceObjectEvent):
 
     event_name = 'obj.created'
 
-    def __call__(self) -> str:
-        """Notify about the event, need to be implemented by subclass.
-
-        :returns: A string
-        """
-        return BaseEvent.__call__(self)
-
 
 class ObjectUpdatedEvent(ResourceObjectEvent):
     """Event to notify database object updated."""
 
     event_name = 'obj.updated'
-
-    def __call__(self) -> str:
-        """Notify about the event, need to be implemented by subclass.
-
-        :returns: A string
-        """
-        return BaseEvent.__call__(self)
