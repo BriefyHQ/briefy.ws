@@ -41,14 +41,14 @@ class ResourceObjectEvent(BaseResourceObjectEvent, BaseEvent):
 
     logger = logger
 
-    def __init__(self, obj: Base, request: Request):
+    def __init__(self, obj: Base, request: Request, **kwargs):
         """Custom init to call parent BaseEvent if it exist."""
         user = getattr(request, 'user', None)
         user_id = None
         if user:
             user_id = user.id
 
-        kwargs = {'actor': user_id, 'request_id': None}
+        kwargs.update({'actor': user_id, 'request_id': None})
         super().__init__(obj, request, **kwargs)
 
 
@@ -57,8 +57,22 @@ class ObjectCreatedEvent(ResourceObjectEvent):
 
     event_name = 'obj.created'
 
+    def __call__(self) -> str:
+        """Notify about the event, need to be implemented by subclass.
+
+        :returns: A string
+        """
+        return BaseEvent.__call__(self)
+
 
 class ObjectUpdatedEvent(ResourceObjectEvent):
     """Event to notify database object updated."""
 
     event_name = 'obj.updated'
+
+    def __call__(self) -> str:
+        """Notify about the event, need to be implemented by subclass.
+
+        :returns: A string
+        """
+        return BaseEvent.__call__(self)
