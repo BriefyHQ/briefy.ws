@@ -19,6 +19,7 @@ History
     * Improve base resource filters to be filter association proxy attributes using special comparator (rudaporto).
     * Validate if we can find the column to do the filer and send the proper error messsage if not (rudaporto).
     * Make sure we call super().__init__ and super().__call__ always and logger as debug if some error happens (rudaporto).
+    * Disable by default the 500 server error view in test and development environments (rudaporto).
 
 
 2.0.6 (2017-07-27)

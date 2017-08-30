@@ -1,4 +1,5 @@
 """HTTP Errors 50x view for Briefy APIs using briefy.ws."""
+from briefy.common.config import ENV
 from briefy.ws import logger
 from pyramid.request import Request
 from pyramid.response import Response
@@ -7,7 +8,6 @@ from pyramid.view import view_config
 import json
 
 
-@view_config(context=Exception)
 def server_error(exc: Exception, request: Request) -> Response:
     """View overriding default 500 error page.
 
@@ -31,3 +31,6 @@ def server_error(exc: Exception, request: Request) -> Response:
     response.status_int = 500
     response.content_type = 'application/json'
     return response
+
+if ENV not in ('test', 'development'):
+    server_error = view_config(context=Exception)(server_error)
