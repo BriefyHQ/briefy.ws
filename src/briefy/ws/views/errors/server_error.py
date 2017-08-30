@@ -32,5 +32,6 @@ def server_error(exc: Exception, request: Request) -> Response:
     response.content_type = 'application/json'
     return response
 
+
 if ENV not in ('test', 'development'):
     server_error = view_config(context=Exception)(server_error)
