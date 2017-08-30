@@ -167,6 +167,10 @@ class Model:
     def __call__(self, *args):
         return self
 
+    def to_dict(self, *args, **kwargs):
+        """Mock to return the serialized obj."""
+        return self
+
     @classmethod
     def id(cls):
         """Return cls id attribute to be used in the obj query."""
