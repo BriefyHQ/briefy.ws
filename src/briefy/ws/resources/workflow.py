@@ -4,6 +4,7 @@ from briefy.common.workflow import WorkflowPermissionException
 from briefy.common.workflow import WorkflowTransition
 from briefy.common.workflow import WorkflowTransitionException
 from briefy.common.workflow.transition import AttachedTransition
+from briefy.ws.errors import ValidationError
 from briefy.ws.resources import BaseResource
 from briefy.ws.utils import data
 from cornice.resource import view
@@ -84,6 +85,9 @@ class WorkflowAwareResource(BaseResource):
                     return response
                 else:
                     raise NotFound(f'Transition not found: {transition}')
+            except ValidationError as e:
+                error_details = {'location': e.location, 'description': e.message, 'name': e.name}
+                self.raise_invalid(**error_details)
             except WorkflowPermissionException:
                 raise Unauthorized(f'Unauthorized transition: {transition}')
             except WorkflowTransitionException as exc:
