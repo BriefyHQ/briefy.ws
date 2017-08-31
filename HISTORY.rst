@@ -2,7 +2,7 @@
 History
 =======
 
-2.1.0 (Unreleased)
+2.1.0 (2017-08-31)
 ------------------
 
     * Improving query and count to be cached in the view class to avoid query duplication in case of a second call (rudaporto).
