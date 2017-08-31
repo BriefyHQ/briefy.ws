@@ -1,19 +1,28 @@
 """Manage model workflow lifecycle via REST."""
-from briefy.common.workflow.base import AttachedTransition
-from briefy.common.workflow.exceptions import WorkflowPermissionException
-from briefy.common.workflow.exceptions import WorkflowTransitionException
+from briefy.common.workflow import Workflow
+from briefy.common.workflow import WorkflowPermissionException
+from briefy.common.workflow import WorkflowTransition
+from briefy.common.workflow import WorkflowTransitionException
+from briefy.common.workflow.transition import AttachedTransition
+from briefy.ws.errors import ValidationError
 from briefy.ws.resources import BaseResource
 from briefy.ws.utils import data
 from cornice.resource import view
 from pyramid.httpexceptions import HTTPNotFound as NotFound
 from pyramid.httpexceptions import HTTPUnauthorized as Unauthorized
 
+import colander
+import typing as t
+
+
+BriefySchemaOrNone = t.Union[data.BriefySchemaNode, None]
+
 
 class WorkflowAwareResource(BaseResource):
     """Workflow aware resource."""
 
     @property
-    def workflow(self):
+    def workflow(self) -> Workflow:
         """Return workflow for the model."""
         id = self.request.matchdict.get('id', '')
         obj = self.get_one(id)
@@ -21,10 +30,9 @@ class WorkflowAwareResource(BaseResource):
         workflow = getattr(obj, 'workflow', None)
         if workflow:
             workflow.context = context
-            return workflow
-        return None
+        return workflow
 
-    def _fields_schema(self, transition):
+    def _fields_schema(self, transition: WorkflowTransition) -> BriefySchemaOrNone:
         """Return a schema to handle fields payload."""
         schema = None
         required_fields = transition.required_fields
@@ -38,7 +46,7 @@ class WorkflowAwareResource(BaseResource):
         return schema
 
     @property
-    def schema_post(self):
+    def schema_post(self) -> colander.SchemaNode:
         """Schema for write operations."""
         body = self.request.json_body
         payload = body if body else self.request.POST
@@ -52,10 +60,10 @@ class WorkflowAwareResource(BaseResource):
         return schema
 
     @view(validators='_run_validators')
-    def collection_post(self):
+    def collection_post(self) -> dict:
         """Add a new instance.
 
-        :returns: Newly created instance
+        :returns: Information about the transition.
         """
         self.set_transaction_name('collection_post')
         transition = self.request.validated['transition']
@@ -72,16 +80,16 @@ class WorkflowAwareResource(BaseResource):
 
                     response = {
                         'status': True,
-                        'message': 'Transition executed: {id}'.format(id=transition)
+                        'message': f'Transition executed: {transition}'
                     }
-
                     return response
                 else:
-                    msg = 'Transition not found: {id}'.format(id=transition)
-                    raise NotFound(msg)
+                    raise NotFound(f'Transition not found: {transition}')
+            except ValidationError as e:
+                error_details = {'location': e.location, 'description': e.message, 'name': e.name}
+                self.raise_invalid(**error_details)
             except WorkflowPermissionException:
-                msg = 'Unauthorized transition: {id}'.format(id=transition)
-                raise Unauthorized(msg)
+                raise Unauthorized(f'Unauthorized transition: {transition}')
             except WorkflowTransitionException as exc:
                 msg = str(exc)
                 field = 'fields'
@@ -90,21 +98,15 @@ class WorkflowAwareResource(BaseResource):
                 self.raise_invalid('body', field, msg)
         else:
             state = workflow.state.name
-            msg = 'Invalid transition: {id} (for state: {state}). ' \
-                  'Your valid transitions list are: {transitions}'
-            msg = msg.format(id=transition,
-                             state=state,
-                             transitions=valid_transitions_list)
+            msg = f'Invalid transition: {transition} (for state: {state}). ' \
+                  'Your valid transitions list are: {valid_transitions_list}'
             self.raise_invalid('body', 'transition', msg)
 
     @view(validators='_run_validators')
-    def collection_get(self):
+    def collection_get(self) -> dict:
         """Return the list of available transitions for this user in this object."""
         self.set_transaction_name('collection_get')
-        response = {
-            'transitions': [],
-            'total': 0
-        }
+        response = {'transitions': [], 'total': 0}
         workflow = self.workflow
         if workflow:
             transitions = workflow.transitions

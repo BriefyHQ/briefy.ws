@@ -2,6 +2,26 @@
 History
 =======
 
+2.1.0 (2017-08-31)
+------------------
+
+    * Improving query and count to be cached in the view class to avoid query duplication in case of a second call (rudaporto).
+    * Upgrade depencies to new versions and in special pyramid to 1.9.1 (rudaporto).
+    * Improving query and count to be cached in the view class to avoid query duplication in case of a second call (rudaporto).
+    * Increase usage of type hints (ericof).
+    * Increase code coverage (ericof).
+    * Fix Workflow imports (ericof).
+    * New base resource to return a paginate collection from a custom plain sql query (rudaporto).
+    * Refactor all mocks used for resource tests (rudaporto).
+    * Added new test to check RESTService.collection_get method (rudaporto).
+    * Move database fixtures to conftest and use Base sqlalchemy from briefy.common (rudaporto).
+    * Fix: validate column filters before trying to access attr to create the filter (rudaporto).
+    * Improve base resource filters to be filter association proxy attributes using special comparator (rudaporto).
+    * Validate if we can find the column to do the filer and send the proper error messsage if not (rudaporto).
+    * Make sure we call super().__init__ and super().__call__ always and logger as debug if some error happens (rudaporto).
+    * Disable by default the 500 server error view in test and development environments (rudaporto).
+    * Handle ValidationError on WorkflowAwareResource.post (ericof).
+
 2.0.6 (2017-07-27)
 ------------------
 
@@ -21,6 +41,9 @@ History
 ------------------
 
     * Refactor resource classes into modules and added new resources for versions and history (rudaporto).
+    * Change security database query filter to use new briefy.common Model.query parameters (rudaporto).
+    * RESTService.collection_post should use model.create classmethod factory (rudaporto).
+    * Added to the payload of VersionsService _title, _description and _slug using the getters and without the underscore in the names (rudaporto).
 
 2.0.2 (2017-05-18)
 ------------------

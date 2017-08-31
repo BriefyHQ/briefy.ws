@@ -2,7 +2,10 @@
 from briefy.common.utils.transformers import to_serializable
 from pyramid.interfaces import IJSONAdapter
 from pyramid.renderers import JSON
+from pyramid.request import Request
 from zope.interface import providedBy
+
+import typing as t
 
 
 _marker = object()
@@ -11,21 +14,21 @@ _marker = object()
 class JSONRenderer(JSON):
     """JSON renderer that inject to_serializable as default for json or simplejson dumps call."""
 
-    def _make_default(self, request):
+    def _make_default(self, request: Request):
         """Make default function is not used anymore, just here to explicit it."""
         def default(obj):
             if hasattr(obj, '__json__'):
                 return obj.__json__(request)
             obj_iface = providedBy(obj)
             adapters = self.components.adapters
-            result = adapters.lookup((obj_iface,), IJSONAdapter,
-                                     default=_marker)
+            result = adapters.lookup((obj_iface,), IJSONAdapter, default=_marker)
             if result is _marker:
-                raise TypeError('%r is not JSON serializable' % (obj,))
+                obj_repr = repr(obj)
+                raise TypeError(f'{obj_repr} is not JSON serializable')
             return result(obj, request)
         return default
 
-    def __call__(self, info):
+    def __call__(self, info) -> t.Callable:
         """Return a plain JSON-encoded string with content-type ``application/json``.
 
         The content-type may be overridden by setting ``request.response.content_type``.

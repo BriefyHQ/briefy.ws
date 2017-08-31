@@ -6,6 +6,7 @@ from briefy.ws.config import USER_SERVICE_TIMEOUT
 
 import requests
 import transaction
+import typing as t
 
 
 def _get_user_info_from_service(user_id: str) -> dict:
@@ -15,28 +16,23 @@ def _get_user_info_from_service(user_id: str) -> dict:
     :return: Dictionary with user information.
     """
     data = {}
-    endpoint = '{base_url}/users/{user_id}'.format(
-        base_url=USER_SERVICE_BASE,
-        user_id=user_id
-    )
+    endpoint = f'{USER_SERVICE_BASE}/users/{user_id}'
     # TODO: improve this to user current user locale
     headers = {'X-Locale': 'en_GB'}
     savepoint = transaction.savepoint()
     try:
-        resp = requests.get(
-            endpoint,
-            headers=headers
-        )
-    except ConnectionError as exc:
-        logger.warn('Failure connecting to internal user service. Exception: {exc}'.format(exc=exc))
+        resp = requests.get(endpoint, headers=headers)
+    except requests.ConnectionError as exc:
+        logger.warn(f'Failure connecting to internal user service. Exception: {exc}')
         savepoint.rollback()
     else:
         if resp.status_code == 200:
             raw_data = resp.json()
             data = raw_data['data'] if 'data' in raw_data else data
         else:
-            msg = 'Getting user info from internal services fail. Status code: {status_code}.'
-            logger.info(msg.format(status_code=resp.status_code))
+            status_code = resp.status_code
+            msg = f'Getting user info from internal services fail. Status code: {status_code}.'
+            logger.info(msg)
     return data
 
 
@@ -62,7 +58,7 @@ def get_public_user_info(user_id: str) -> dict:
     return data
 
 
-def add_user_info_to_state_history(state_history):
+def add_user_info_to_state_history(state_history: t.Sequence[dict]) -> None:
     """Receive object state history and add user information.
 
     :param state_history: list of workflow state history.

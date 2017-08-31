@@ -1,18 +1,17 @@
 -e git+git@github.com:BriefyHQ/octopus.checkstyle.git@master#egg=octopus.checkstyle
 -r prod.txt
-Jinja2==2.8
-Sphinx==1.4.4
-alabaster==0.7.7
-coverage==4.1
-httmock==1.2.5
+Jinja2==2.9.6
+Sphinx==1.6.3
+alabaster==0.7.10
+coverage==4.4.1
+httmock==1.2.6
 pyramid-debugtoolbar==2.4.2
-pytest==3.0.5
-pytest-cov==2.3.1
-pytz==2015.7
+pytest==3.1.3
+pytest-cov==2.5.1
 snowballstemmer==1.2.1
 sphinx-autodoc-typehints
 sphinx-bootstrap-theme==0.4.8
 sphinx-rtd-theme==0.1.9
-tox==2.3.1
-WebTest==2.0.20
+tox==2.7.0
+WebTest==2.0.27
 newrelic

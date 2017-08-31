@@ -1,4 +1,11 @@
 """Pagination to be used with REST Services."""
+from sqlalchemy.orm.query import Query
+from sqlalchemy.orm.session import Session
+
+import typing as t
+
+
+IntOrNone = t.Union[int, None]
 
 
 class Page(list):
@@ -50,12 +57,22 @@ class Page(list):
         Index of last item on the current page
     """
 
+    item_count: int = 0
+    first_page: IntOrNone = None
+    page_count: IntOrNone = None
+    last_page: IntOrNone = None
+    first_item: IntOrNone = None
+    last_item: IntOrNone = None
+    previous_page: IntOrNone = None
+    next_page: IntOrNone = None
+    items: t.Sequence = ()
+
     def __init__(
             self,
-            collection,
+            collection: t.Union[t.Sequence, None],
             page: int=1,
             items_per_page: int=20,
-            item_count: int=None,
+            item_count: IntOrNone=None,
             wrapper_class=None,
             **kwargs
     ):
@@ -124,11 +141,8 @@ class Page(list):
             last = first + items_per_page
             self.items = list(self.collection[first:last])
         except TypeError:
-            raise TypeError(
-                'Your collection of type {type_} cannot be handled by paginate'.format(
-                    type_=type(self.collection_type)
-                )
-            )
+            type_ = type(self.collection_type)
+            raise TypeError(f'Your collection of type {type_} cannot be handled by paginate')
 
         # Unless the user tells us how many items the collections has
         # we calculate that ourselves.
@@ -193,54 +207,48 @@ class Page(list):
     def __str__(self) -> str:
         """Display general info about this Page."""
         return (
-            'Page:\n'
-            'Collection type:        {0.collection_type}\n'
-            'Current page:           {0.page}\n'
-            'First item:             {0.first_item}\n'
-            'Last item:              {0.last_item}\n'
-            'First page:             {0.first_page}\n'
-            'Last page:              {0.last_page}\n'
-            'Previous page:          {0.previous_page}\n'
-            'Next page:              {0.next_page}\n'
-            'Items per page:         {0.items_per_page}\n'
-            'Total number of items:  {0.item_count}\n'
-            'Number of pages:        {0.page_count}\n'
-            ).format(self)
+            f'Page:\n'
+            'Collection type:        {self.collection_type}\n'
+            'Current page:           {self.page}\n'
+            'First item:             {self.first_item}\n'
+            'Last item:              {self.last_item}\n'
+            'First page:             {self.first_page}\n'
+            'Last page:              {self.last_page}\n'
+            'Previous page:          {self.previous_page}\n'
+            'Next page:              {self.next_page}\n'
+            'Items per page:         {self.items_per_page}\n'
+            'Total number of items:  {self.item_count}\n'
+            'Number of pages:        {self.page_count}\n'
+        )
 
     def __repr__(self) -> str:
         """Representation of the Page."""
-        return(
-            '<Page number={page} total={page_count}>'.format(
-                page=self.page,
-                page_count=self.page_count
-            )
-        )
+        return f'<Page number={self.page} total={self.page_count}>'
 
     def __call__(self) -> dict:
         """Return a dictionary with page data, pagination info."""
         page_info = self.page_info()
-        response = {
+        return {
             'data': self.items,
             'pagination': page_info,
             'total': page_info['total']
         }
-        return response
 
 
 class SQLOrmWrapper:
     """Wrapper class to access elements of an SQLAlchemy ORM query result."""
 
-    def __init__(self, obj):
+    def __init__(self, obj: Query):
         """Initialize SQLOrmWrapper.
 
         :param obj: SQLAlchemy query.
         """
         self.obj = obj
 
-    def __getitem__(self, range: slice):
-        """Get item.
+    def __getitem__(self, range: slice) -> t.Sequence[object]:
+        """Get items.
 
-        :return: Number of objects.
+        :return: A Sequence of objects.
         """
         if not isinstance(range, slice):
             raise Exception('__getitem__ without slicing not supported')
@@ -267,31 +275,27 @@ class SQLPage(Page):
         :param args: Arguments for pagination.
         :param kwargs: Keyword arguments for pagination.
         """
-        super().__init__(
-            *args,
-            wrapper_class=SQLOrmWrapper,
-            **kwargs
-        )
+        super().__init__(*args, wrapper_class=SQLOrmWrapper, **kwargs)
 
 
-def sql_wrapper_factory(db_session=None):
+def sql_wrapper_factory(db_session: Session) -> any:
     """Wrapper for select.
 
-    :param db_session: SQLAlchemy database session.
-    :return: SQLSelectWrapper
+    :param db_session: Database session.
+    :return: SQLSelectWrapper.
     """
     class SQLSelectWrapper:
         """Wrapper class to access elements of an SQLAlchemy SELECT query."""
 
-        def __init__(self, obj):
+        def __init__(self, obj: Query):
             """Initialize SQLSelectWrapper."""
             self.obj = obj
             self.db_session = db_session
 
-        def __getitem__(self, range: slice):
-            """Get item.
+        def __getitem__(self, range: slice) -> t.Sequence:
+            """Get items.
 
-            :return: Number of objects.
+            :return: A Sequence of objects.
             """
             if not isinstance(range, slice):
                 raise Exception('__getitem__ without slicing not supported')
@@ -318,14 +322,10 @@ class SQLSelectPage(Page):
     with instances of this class.
     """
 
-    def __init__(self, db_session, *args, **kwargs):
+    def __init__(self, db_session: Session, *args, **kwargs):
         """sqlalchemy_connection: SQLAlchemy connection object."""
         wrapper = sql_wrapper_factory(db_session)
-        super().__init__(
-            *args,
-            wrapper_class=wrapper,
-            **kwargs
-        )
+        super().__init__(*args, wrapper_class=wrapper, **kwargs)
 
 
 def extract_pagination_from_query_params(query_params: dict) -> dict:
@@ -339,10 +339,7 @@ def extract_pagination_from_query_params(query_params: dict) -> dict:
         'items_per_page': 25
     }
     for key, value in params.items():
-
-        new_value = query_params.get(
-            '_{key}'.format(key=key), value
-        )
+        new_value = query_params.get(f'_{key}', value)
         try:
             value = int(new_value)
         except ValueError:

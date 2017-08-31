@@ -6,6 +6,7 @@ from briefy.ws.auth import user_factory
 from briefy.ws.config import JWT_EXPIRATION
 from briefy.ws.config import JWT_SECRET
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.config import Configurator
 
 import logging
 import os
@@ -19,7 +20,7 @@ CORS_POLICY = {
 logger = logging.getLogger(__name__)
 
 
-def expandvars_dict(settings):
+def expandvars_dict(settings: dict) -> dict:
     """Expand all environment variables in a settings dictionary.
 
     http://stackoverflow.com/a/16446566
@@ -29,7 +30,7 @@ def expandvars_dict(settings):
     return {key: os.path.expandvars(value) for key, value in settings.items()}
 
 
-def includeme(config):
+def includeme(config: Configurator):
     """Configuration to be included by other services."""
     # Setup cornice.
     config.include('cornice')
