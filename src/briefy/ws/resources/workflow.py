@@ -53,6 +53,10 @@ class WorkflowAwareResource(BaseResource):
         transition_id = payload.get('transition')
         workflow = self.workflow
         transition = workflow.transitions.get(transition_id)
+        if not transition:
+            message = f'Transition {transition_id} is not available.'
+            error_details = {'location': 'body', 'description': message, 'name': 'transition'}
+            return self.raise_invalid(**error_details)
         schema = data.WorkflowTransitionSchema(unknown='ignore')
         fields = self._fields_schema(transition)
         if fields:
@@ -87,7 +91,7 @@ class WorkflowAwareResource(BaseResource):
                     raise NotFound(f'Transition not found: {transition}')
             except ValidationError as e:
                 error_details = {'location': e.location, 'description': e.message, 'name': e.name}
-                self.raise_invalid(**error_details)
+                return self.raise_invalid(**error_details)
             except WorkflowPermissionException:
                 raise Unauthorized(f'Unauthorized transition: {transition}')
             except WorkflowTransitionException as exc:
@@ -95,12 +99,12 @@ class WorkflowAwareResource(BaseResource):
                 field = 'fields'
                 if 'Message' in str(exc):
                     field = 'message'
-                self.raise_invalid('body', field, msg)
+                return self.raise_invalid('body', field, msg)
         else:
             state = workflow.state.name
             msg = f'Invalid transition: {transition} (for state: {state}). ' \
                   'Your valid transitions list are: {valid_transitions_list}'
-            self.raise_invalid('body', 'transition', msg)
+            return self.raise_invalid('body', 'transition', msg)
 
     @view(validators='_run_validators')
     def collection_get(self) -> dict:

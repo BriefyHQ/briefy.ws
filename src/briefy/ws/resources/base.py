@@ -203,7 +203,7 @@ class BaseResource:
         """
         request = self.request
         request.errors.add(location, name, description, **kwargs)
-        raise json_error(request)
+        return json_error(request)
 
     def notify_obj_event(self, obj: Base, method: str='') -> None:
         """Create right event object based on current request method.
@@ -321,7 +321,7 @@ class BaseResource:
                 'description': e.message,
                 'name': e.name
             }
-            self.raise_invalid(**error_details)
+            return self.raise_invalid(**error_details)
 
         for raw_filter in raw_filters:
             with_transformation = False
@@ -337,7 +337,7 @@ class BaseResource:
                     'description': 'filter column not found in this item',
                     'name': key
                 }
-                self.raise_invalid(**error_details)
+                return self.raise_invalid(**error_details)
 
             if value == 'null':
                 value = None
@@ -389,7 +389,7 @@ class BaseResource:
                     'name': key,
                     'value': value
                 }
-                self.raise_invalid(**error_details)
+                return self.raise_invalid(**error_details)
 
             if isinstance(column, (AssociationProxy, InstrumentedAttribute)) and '.' in key:
                 if mapper:
@@ -418,7 +418,7 @@ class BaseResource:
             )
         except ValidationError as e:
             error_details = {'location': e.location, 'description': e.message, 'name': e.name}
-            self.raise_invalid(**error_details)
+            return self.raise_invalid(**error_details)
 
         for sorting in raw_sorting:
             key = sorting.field

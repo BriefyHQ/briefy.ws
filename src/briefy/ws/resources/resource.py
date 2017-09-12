@@ -81,13 +81,13 @@ class RESTService(BaseResource):
         # verify if object with same ID exists
         obj_id = payload.get('id')
         if obj_id and model.get(obj_id):
-            self.raise_invalid('body', 'id', f'Duplicate object UUID: {obj_id}')
+            return self.raise_invalid('body', 'id', f'Duplicate object UUID: {obj_id}')
 
         try:
             obj = model.create(payload)
         except ValidationError as e:
             error_details = {'location': e.location, 'description': e.message, 'name': e.name}
-            self.raise_invalid(**error_details)
+            return self.raise_invalid(**error_details)
         except Exception as exc:
             logger.exception(f'Error creating an instance of {model.__name__}')
             raise ValueError from exc
@@ -139,7 +139,7 @@ class RESTService(BaseResource):
             obj.update(self.request.validated)
         except ValidationError as e:
             error_details = {'location': e.location, 'description': e.message, 'name': e.name}
-            self.raise_invalid(**error_details)
+            return self.raise_invalid(**error_details)
         except Exception as e:
             logger.exception(f'Error updating an instance {obj.id} of {obj.__class__.__name__}')
             raise ValueError from e
