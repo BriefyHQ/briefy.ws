@@ -2,6 +2,11 @@
 History
 =======
 
+2.1.1 (2017-09-12)
+------------------
+    * Fix: raise_invalid should be return the result of json_error and when we use it we should return as the response payload (rudaporto).
+    * Check if the workflow transition is available when we create the payload schema validator (rudaporto).
+
 2.1.0 (2017-08-31)
 ------------------
 
