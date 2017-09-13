@@ -273,10 +273,7 @@ class BaseResource:
         :return: Count of records to be returned
         """
         if not query:
-            try:
-                query, query_params = self._get_records_query()
-            except ValidationError as exc:
-                return 0
+            query, query_params = self._get_records_query()
 
         if not self._item_count:
             self._item_count = query.count()
