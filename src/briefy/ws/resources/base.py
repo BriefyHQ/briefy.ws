@@ -309,19 +309,10 @@ class BaseResource:
 
     def filter_query(self, query: Query, query_params: t.Optional[dict]=None) -> Query:
         """Apply request filters to a query."""
-        raw_filters = ()
-        try:
-            raw_filters = filter.create_filter_from_query_params(
-                query_params,
-                self.filter_allowed_fields
-            )
-        except ValidationError as e:
-            error_details = {
-                'location': e.location,
-                'description': e.message,
-                'name': e.name
-            }
-            return self.raise_invalid(**error_details)
+        raw_filters = filter.create_filter_from_query_params(
+            query_params,
+            self.filter_allowed_fields
+        )
 
         for raw_filter in raw_filters:
             with_transformation = False
@@ -332,12 +323,11 @@ class BaseResource:
             query, column, sub_key = self.get_column_from_key(query, key)
 
             if not column:
-                error_details = {
-                    'location': 'querystring',
-                    'description': 'filter column not found in this item',
-                    'name': key
-                }
-                return self.raise_invalid(**error_details)
+                raise ValidationError(
+                    message=f'Unknown filter field \'{key}\'',
+                    location='querystring',
+                    name=key
+                )
 
             if value == 'null':
                 value = None
@@ -408,17 +398,12 @@ class BaseResource:
 
     def sort_query(self, query: Query, query_params: t.Optional[dict]=None) -> Query:
         """Apply request sorting to a query."""
-        raw_sorting = ()
-        try:
-            raw_sorting = filter.create_sorting_from_query_params(
-                query_params,
-                self.filter_allowed_fields,
-                self.default_order_by,
-                self.default_order_direction
-            )
-        except ValidationError as e:
-            error_details = {'location': e.location, 'description': e.message, 'name': e.name}
-            return self.raise_invalid(**error_details)
+        raw_sorting = filter.create_sorting_from_query_params(
+            query_params,
+            self.filter_allowed_fields,
+            self.default_order_by,
+            self.default_order_direction
+        )
 
         for sorting in raw_sorting:
             key = sorting.field

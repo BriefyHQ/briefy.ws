@@ -2,6 +2,10 @@
 History
 =======
 
+2.1.2 (2017-09-13)
+------------------
+    * Fix: update raise_invalid fix in 2.1.1 to only be used in inside the view http methods (rudaporto).
+
 2.1.1 (2017-09-12)
 ------------------
     * Fix: raise_invalid should be return the result of json_error and when we use it we should return as the response payload (rudaporto).

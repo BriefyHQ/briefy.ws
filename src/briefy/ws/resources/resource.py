@@ -111,7 +111,12 @@ class RESTService(BaseResource):
         """
         self.set_transaction_name('collection_get')
         headers = self.request.response.headers
-        pagination = self.get_records()
+        try:
+            pagination = self.get_records()
+        except ValidationError as e:
+            error_details = {'location': e.location, 'description': e.message, 'name': e.name}
+            return self.raise_invalid(**error_details)
+
         headers['Total-Records'] = str(self.count_records())
         # Force in here to use the listing serialization.
         pagination['data'] = [o.to_listing_dict() for o in pagination['data']]
