@@ -383,13 +383,15 @@ class BaseResource:
 
             expression = attrs[0](value)
             is_proxy = isinstance(column, AssociationProxy)
+            is_instrumented = isinstance(column, InstrumentedAttribute)
 
-            if is_proxy or isinstance(column, InstrumentedAttribute) and '.' in key:
-                if mapper or is_proxy:
-                    if hasattr(expression, 'any_'):
-                        filt = column.any(expression)
-                    else:
-                        filt = column.has(expression)
+            if is_proxy or is_instrumented and '.' in key:
+                if is_proxy and not column.scalar:
+                    filt = column.any(expression)
+                elif is_instrumented and column.property.uselist:
+                    filt = column.any(expression)
+                elif is_instrumented or mapper:
+                    filt = column.has(expression)
                 else:
                     filt = expression
             else:
