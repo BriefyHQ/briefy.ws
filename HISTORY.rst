@@ -2,15 +2,11 @@
 History
 =======
 
-2.1.4 (Unreleased)
-------------------
-
-    * Fix: when filter association proxy or relationship field try "any" if available first to filter collections (rudaporto).
-
-2.1.3 (2017-10-03)
+2.1.3 (2017-10-09)
 ------------------
 
     * Fix: check if the object has workflow before trying to get permissions from the workflow (rudaporto).
+    * Fix: when filter association proxy or relationship field try "any" if available first to filter collections (rudaporto).
 
 2.1.2 (2017-09-13)
 ------------------
