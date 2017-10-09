@@ -2,6 +2,11 @@
 History
 =======
 
+2.1.4 (Unreleased)
+------------------
+
+    * Fix: when filter association proxy or relationship field try "any" if available first to filter collections (rudaporto).
+
 2.1.3 (2017-10-03)
 ------------------
 
