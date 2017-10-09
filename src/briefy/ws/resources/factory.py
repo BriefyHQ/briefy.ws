@@ -85,7 +85,7 @@ class BaseFactory:
 
         if validate_uuid(context_id) and model and user:
             context = model.get(context_id)
-            if context:
+            if context and getattr(context, 'workflow', None):
                 wf = context.workflow
                 wf.context = user
                 permissions = list(wf.permissions())

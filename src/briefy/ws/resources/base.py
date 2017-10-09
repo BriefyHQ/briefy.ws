@@ -381,13 +381,21 @@ class BaseResource:
                 }
                 return self.raise_invalid(**error_details)
 
-            if isinstance(column, (AssociationProxy, InstrumentedAttribute)) and '.' in key:
-                if mapper:
-                    filt = column.has(attrs[0](value))
+            expression = attrs[0](value)
+            is_proxy = isinstance(column, AssociationProxy)
+            is_instrumented = isinstance(column, InstrumentedAttribute)
+
+            if is_proxy or is_instrumented and '.' in key:
+                if is_proxy and not column.scalar:
+                    filt = column.any(expression)
+                elif is_instrumented and column.property.uselist:
+                    filt = column.any(expression)
+                elif is_instrumented or mapper:
+                    filt = column.has(expression)
                 else:
-                    filt = attrs[0](value)
+                    filt = expression
             else:
-                filt = attrs[0](value)
+                filt = expression
 
             if with_transformation:
                 query = query.with_transformation(filt)
