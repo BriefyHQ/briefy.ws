@@ -2,7 +2,7 @@
 History
 =======
 
-2.1.4 (Unreleased)
+2.1.4 (2017-11-02)
 ------------------
 
     * Fix: Do not validate body for methods that do not expect a body (ericof).
