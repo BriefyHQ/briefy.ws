@@ -179,10 +179,10 @@ class BaseResource:
 
         :param request: request object
         """
-        # first #ForaTemer, second always validate jwt token on request.
         validate_jwt_token(request)
+        request_method = request.method
 
-        validators = self.validators.get(self.request.method, [])
+        validators = self.validators.get(request_method, [])
         for item in validators:
             try:
                 validator = item
@@ -192,7 +192,10 @@ class BaseResource:
                 raise AttributeError(f'Validator "{item}" specified not found.')
             else:
                 validator(request)
-        colander_body_validator(request, self.schema)
+
+        # Only validate body if we expect a body in the method
+        if request_method in ('PATCH', 'POST', 'PUT'):
+            colander_body_validator(request, self.schema)
 
     def raise_invalid(self, location: str='body', name: str='', description: str='', **kwargs):
         """Raise a 400 error.

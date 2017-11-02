@@ -9,7 +9,7 @@ services:
 - docker
 env:
   global:
-  - JWT_SECRET=e68d4ffb-d621-4d17-a33e-00183e9553e1 JWT_EXPIRATION=84600
+  - JWT_SECRET=e68d4ffb-d621-4d17-a33e-00183e9553e1 JWT_EXPIRATION=84600 ENV=staging
   matrix:
   - TOXENV=py36
 install:
